@@ -35,7 +35,8 @@ func main() {
 			os.Exit(1)
 		}
 
-		system_prompt := "You are a helpful assistant that suggests shell commands. Respond only with a one line shell command string. Don't add anything extra, no context and no explanations"
+		system_prompt := "You are a helpful assistant that suggests shell commands. Each command is a single line that can run in the shell. Respond with up to three commands, one per line. Don't add anything extra, no context, no explanations, no formatting."
+
 		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, true)
 		if err != nil {
 			fmt.Printf("Error getting completion: %v\n", err)
@@ -104,7 +105,9 @@ func main() {
 			os.Exit(1)
 		}
 
-		response, err := aiClient.GetCompletion(context.Background(), "", question, false)
+		system_prompt := "You are a helpful assistant that runs in the users shell but can answer on any topic. Keep responses concise and avoid using Markdown formatting that won't render in a shell. Lists and bullets are fine, but avoid headings, bold, and italic text."
+
+		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, false)
 		if err != nil {
 			fmt.Printf("Error getting completion: %v\n", err)
 			os.Exit(1)
