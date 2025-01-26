@@ -65,6 +65,26 @@ func main() {
 		}
 
 		fmt.Print(string(data))
+	case "/show":
+		path, err := ai.GetCompletionStoragePath()
+		if err != nil {
+			fmt.Printf("Error getting completion path: %v\n", err)
+			os.Exit(1)
+		}
+
+		data, err := os.ReadFile(path)
+		if err != nil {
+			fmt.Printf("Error reading completion file: %v\n", err)
+			os.Exit(1)
+		}
+
+		commands := strings.Split(string(data), "\n")
+		fmt.Println("Stored commands:")
+		for i, cmd := range commands {
+			if cmd != "" {
+				fmt.Printf("%d: %s\n", i+1, cmd)
+			}
+		}
 	case "/ask":
 		if len(os.Args) < 3 {
 			fmt.Println("Usage: pal /ask <question>")
