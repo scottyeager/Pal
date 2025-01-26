@@ -27,20 +27,14 @@ func Configure() {
 	var apiKey string
 	fmt.Scanln(&apiKey)
 
-	cfg := config.Config{
+	cfg := &config.Config{
 		APIKey: apiKey,
 	}
 
-	data, err := yaml.Marshal(&cfg)
-	if err != nil {
-		fmt.Printf("Error marshaling config: %v\n", err)
+	if err := config.SaveConfig(cfg); err != nil {
+		fmt.Printf("Error saving config: %v\n", err)
 		return
 	}
 
-	if err := os.WriteFile(cfgPath, data, 0600); err != nil {
-		fmt.Printf("Error writing config file: %v\n", err)
-		return
-	}
-
-	fmt.Printf("Config saved to %s\n", cfgPath)
+	fmt.Printf("Config saved successfully\n")
 }
