@@ -66,8 +66,8 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 		return completion, fmt.Errorf("failed to create storage directory: %w", err)
 	}
 
-	// Append completion to file
-	file, err := os.OpenFile(storagePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	// Write completion to file
+	file, err := os.OpenFile(storagePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return completion, fmt.Errorf("failed to open storage file: %w", err)
 	}
