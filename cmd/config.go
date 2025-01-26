@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/scottyeager/pal/config"
-	"gopkg.in/yaml.v3"
+	// "gopkg.in/yaml.v3"
 )
 
 func Configure() {
