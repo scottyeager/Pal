@@ -28,7 +28,7 @@ func NewClient(cfg *config.Config) (*Client, error) {
 	}, nil
 }
 
-func getCompletionStoragePath() (string, error) {
+func GetCompletionStoragePath() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("failed to get home directory: %w", err)
@@ -53,29 +53,29 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 	}
 
 	completion := resp.Choices[0].Message.Content
-	
+
 	// Store the completion
-	storagePath, err := getCompletionStoragePath()
+	storagePath, err := GetCompletionStoragePath()
 	if err != nil {
 		return completion, fmt.Errorf("failed to get storage path: %w", err)
 	}
-	
+
 	// Create directory if it doesn't exist
 	storageDir := filepath.Dir(storagePath)
 	if err := os.MkdirAll(storageDir, 0755); err != nil {
 		return completion, fmt.Errorf("failed to create storage directory: %w", err)
 	}
-	
+
 	// Append completion to file
 	file, err := os.OpenFile(storagePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return completion, fmt.Errorf("failed to open storage file: %w", err)
 	}
 	defer file.Close()
-	
+
 	if _, err := file.WriteString(completion + "\n"); err != nil {
 		return completion, fmt.Errorf("failed to write completion: %w", err)
 	}
-	
+
 	return completion, nil
 }
