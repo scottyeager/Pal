@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/scottyeager/pal/config"
 	"gopkg.in/yaml.v3"
