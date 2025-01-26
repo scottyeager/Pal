@@ -27,18 +27,12 @@ func NewClient(cfg *config.Config) (*Client, error) {
 }
 
 func (c *Client) GetCompletion(ctx context.Context, prompt string) (string, error) {
-	resp, err := c.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
-		Model: c.model,
-		Messages: []openai.ChatCompletionMessage{
-			{
-				Role:    "system",
-				Content: "You are a helpful assistant that suggests shell commands",
-			},
-			{
-				Role:    "user",
-				Content: prompt,
-			},
-		},
+	resp, err := c.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+			openai.SystemMessage("You are a helpful assistant that suggests shell commands"),
+			openai.UserMessage(prompt),
+		}),
+		Model: openai.F(c.model),
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to get completion: %w", err)
