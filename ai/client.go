@@ -26,10 +26,10 @@ func NewClient(cfg *config.Config) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) GetCompletion(ctx context.Context, prompt string) (string, error) {
+func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt string) (string, error) {
 	resp, err := c.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage("You are a helpful assistant that suggests shell commands"),
+			openai.SystemMessage(system_prompt),
 			openai.UserMessage(prompt),
 		}),
 		Model: openai.F(c.model),
