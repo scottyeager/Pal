@@ -12,4 +12,6 @@ func ShowHelp() {
 	fmt.Println("  /complete  Install shell completions")
 	fmt.Println("  /ask       Ask general questions")
 	fmt.Println("  /run       Run commands with AI assistance")
+	fmt.Println()
+	fmt.Println("First run 'pal /config' to set up your API key")
 }

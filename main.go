@@ -19,6 +19,8 @@ func main() {
 	switch command {
 	case "/help":
 		showHelp()
+	case "/config":
+		cmd.Configure()
 	default:
 		fmt.Printf("Unknown command: %s\n", command)
 	}
