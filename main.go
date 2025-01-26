@@ -51,8 +51,20 @@ func main() {
 		showHelp()
 	case "/config":
 		cmd.Configure()
-	case "/make-completion":
-		fmt.Println("bye")
+	case "/complete":
+		path, err := ai.GetCompletionStoragePath()
+		if err != nil {
+			fmt.Printf("Error getting completion path: %v\n", err)
+			os.Exit(1)
+		}
+
+		data, err := os.ReadFile(path)
+		if err != nil {
+			fmt.Printf("Error reading completion file: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Print(string(data))
 	case "/ask":
 		if len(os.Args) < 3 {
 			fmt.Println("Usage: pal /ask <question>")
