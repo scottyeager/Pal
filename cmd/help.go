@@ -10,6 +10,7 @@ func ShowHelp() {
 	fmt.Println("  /help      Show this help message")
 	fmt.Println("  /config    Configure API keys")
 	fmt.Println("  /complete  Install shell completions")
+	fmt.Println("  /show      Show stored commands")
 	fmt.Println("  /ask       Ask general questions")
 	fmt.Println("  /run       Run commands with AI assistance")
 	fmt.Println()
