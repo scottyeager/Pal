@@ -36,7 +36,7 @@ func GetCompletionStoragePath() (string, error) {
 	return filepath.Join(homeDir, ".local", "share", "pal_helper", "completions.txt"), nil
 }
 
-func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt string) (string, error) {
+func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt string, storeCompletion bool) (string, error) {
 	resp, err := c.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
 			openai.SystemMessage(system_prompt),
@@ -54,27 +54,29 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 
 	completion := resp.Choices[0].Message.Content
 
-	// Store the completion
-	storagePath, err := GetCompletionStoragePath()
-	if err != nil {
-		return completion, fmt.Errorf("failed to get storage path: %w", err)
-	}
+	if storeCompletion {
+		// Store the completion
+		storagePath, err := GetCompletionStoragePath()
+		if err != nil {
+			return completion, fmt.Errorf("failed to get storage path: %w", err)
+		}
 
-	// Create directory if it doesn't exist
-	storageDir := filepath.Dir(storagePath)
-	if err := os.MkdirAll(storageDir, 0755); err != nil {
-		return completion, fmt.Errorf("failed to create storage directory: %w", err)
-	}
+		// Create directory if it doesn't exist
+		storageDir := filepath.Dir(storagePath)
+		if err := os.MkdirAll(storageDir, 0755); err != nil {
+			return completion, fmt.Errorf("failed to create storage directory: %w", err)
+		}
 
-	// Write completion to file
-	file, err := os.OpenFile(storagePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-	if err != nil {
-		return completion, fmt.Errorf("failed to open storage file: %w", err)
-	}
-	defer file.Close()
+		// Write completion to file
+		file, err := os.OpenFile(storagePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+		if err != nil {
+			return completion, fmt.Errorf("failed to open storage file: %w", err)
+		}
+		defer file.Close()
 
-	if _, err := file.WriteString(completion + "\n"); err != nil {
-		return completion, fmt.Errorf("failed to write completion: %w", err)
+		if _, err := file.WriteString(completion + "\n"); err != nil {
+			return completion, fmt.Errorf("failed to write completion: %w", err)
+		}
 	}
 
 	return completion, nil
