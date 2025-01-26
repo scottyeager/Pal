@@ -52,7 +52,7 @@ func main() {
 	case "/config":
 		cmd.Configure()
 	case "/complete":
-		path, err := ai.GetCompletionStoragePath()
+		path, err := ai.getCompletionStoragePath()
 		if err != nil {
 			fmt.Printf("Error getting completion path: %v\n", err)
 			os.Exit(1)
