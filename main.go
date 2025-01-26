@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
-	
-	"github.com/yourusername/pal/cmd"
+
+	"github.com/scottyeager/pal/cmd"
 )
 
 func main() {
@@ -15,7 +15,7 @@ func main() {
 	}
 
 	command := os.Args[1]
-	
+
 	switch command {
 	case "/help":
 		showHelp()

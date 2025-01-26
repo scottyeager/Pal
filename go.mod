@@ -1,6 +1,3 @@
-module github.com/yourusername/pal
+module github.com/scottyeager/pal
 
-go 1.21
-
-require (
-)
+go 1.23
