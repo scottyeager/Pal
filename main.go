@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"strings"
 
+	"github.com/scottyeager/pal/ai"
 	"github.com/scottyeager/pal/cmd"
+	"github.com/scottyeager/pal/config"
 )
 
 func main() {
@@ -21,6 +25,32 @@ func main() {
 		showHelp()
 	case "/config":
 		cmd.Configure()
+	case "/ask":
+		if len(os.Args) < 3 {
+			fmt.Println("Usage: pal /ask <question>")
+			os.Exit(1)
+		}
+		question := strings.Join(os.Args[2:], " ")
+		
+		cfg, err := config.LoadConfig()
+		if err != nil {
+			fmt.Printf("Error loading config: %v\n", err)
+			os.Exit(1)
+		}
+		
+		aiClient, err := ai.NewClient(cfg)
+		if err != nil {
+			fmt.Printf("Error creating AI client: %v\n", err)
+			os.Exit(1)
+		}
+		
+		response, err := aiClient.GetCompletion(context.Background(), question)
+		if err != nil {
+			fmt.Printf("Error getting completion: %v\n", err)
+			os.Exit(1)
+		}
+		
+		fmt.Println(response)
 	default:
 		fmt.Printf("Unknown command: %s\n", command)
 	}
