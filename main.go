@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	
+	"github.com/yourusername/pal/cmd"
 )
 
 func main() {
@@ -21,10 +23,6 @@ func main() {
 		fmt.Printf("Unknown command: %s\n", command)
 	}
 }
-
-import (
-	"github.com/yourusername/pal/cmd"
-)
 
 func showHelp() {
 	cmd.ShowHelp()
