@@ -1,7 +1,8 @@
-function pal_abbr
+function _pal_get_completion
     set -l completions_file ~/.local/share/pal_helper/completions.txt
-    cat $completions_file
+    set -l line_number $argv[1]
+    sed -n {$line_number}p $completions_file
 end
 
-abbr --add pal1 --function pal_abbr
+abbr --regex 'pal(\d+)' --function _pal_get_completion
 
