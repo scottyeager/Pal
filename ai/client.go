@@ -27,8 +27,8 @@ func NewClient(cfg *config.Config) (*Client, error) {
 }
 
 func (c *Client) GetCompletion(ctx context.Context, prompt string) (string, error) {
-    resp, err := c.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-        Messages: []openai.ChatCompletionMessageParamUnion{
+    resp, err := c.client.Chat.Completions.Create(ctx, openai.ChatCompletionRequest{
+        Messages: []openai.ChatCompletionMessage{
             {
                 Role:    openai.ChatCompletionRoleSystem,
                 Content: "You are a helpful assistant that suggests shell commands",
