@@ -5,14 +5,17 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: "recursive"
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -21,19 +24,18 @@ jobs:
 
       - name: Build binaries
         run: |
-          GOOS=linux GOARCH=amd64 go build -o binary-linux-amd64
-          GOOS=linux GOARCH=arm64 go build -o binary-linux-arm64
-          GOOS=darwin GOARCH=amd64 go build -o binary-darwin-amd64
-          GOOS=darwin GOARCH=arm64 go build -o binary-darwin-arm64
+          GOOS=linux GOARCH=amd64 go build -o pal-linux-amd64
+          GOOS=linux GOARCH=arm64 go build -o pal-linux-arm64
+          GOOS=darwin GOARCH=amd64 go build -o pal-darwin-amd64
+          GOOS=darwin GOARCH=arm64 go build -o pal-darwin-arm64
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
-            binary-linux-amd64
-            binary-linux-arm64
-            binary-darwin-amd64
-            binary-darwin-arm64
-            binary-windows-amd64.exe
+            pal-linux-amd64
+            pal-linux-arm64
+            pal-darwin-amd64
+            pal-darwin-arm64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
