@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	
+
 	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	APIKey string `yaml:"api_key"`
+	APIKey           string `yaml:"api_key"`
+	ZshAbbreviations bool   `yaml:"zsh_abbreviations"`
 }
 
 func GetConfigPath() (string, error) {

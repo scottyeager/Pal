@@ -2,14 +2,26 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/scottyeager/pal/ai"
 	"github.com/scottyeager/pal/cmd"
 	"github.com/scottyeager/pal/config"
 )
+
+//go:embed zsh-abbr/zsh-abbr.zsh
+var zshAbbrEmbed string
+
+//go:embed zsh-abbr/zsh-job-queue/zsh-job-queue.zsh
+var zshJobQueueEmbed string
+
+//go:embed abbr.fish
+var fishAbbrEmbed string
 
 func main() {
 	if len(os.Args) < 2 {
@@ -20,7 +32,7 @@ func main() {
 
 	command := os.Args[1]
 
-	if !strings.HasPrefix(command, "/") {
+	if !strings.HasPrefix(command, "/") && !strings.HasPrefix(command, "-") {
 		// If no command is specified, treat the entire input as a question
 		question := strings.Join(os.Args[1:], " ")
 		cfg, err := config.LoadConfig()
@@ -35,12 +47,30 @@ func main() {
 			os.Exit(1)
 		}
 
-		system_prompt := "You are a helpful assistant that suggests shell commands. Each command is a single line that can run in the shell. Respond with up to three commands, one per line. Don't add anything extra, no context, no explanations, no formatting."
+		system_prompt := "You are a helpful assistant that suggests shell commands. Each command is a single line that can run in the shell. Respond three command options, one per line. Don't add anything extra, no context, no explanations, no formatting."
 
 		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, true)
 		if err != nil {
 			fmt.Printf("Error getting completion: %v\n", err)
 			os.Exit(1)
+		}
+
+		if cfg.ZshAbbreviations {
+			for i := 1; i <= 9; i++ {
+				eraseCmd := exec.Command("zsh", "-c", fmt.Sprintf("source ~/.zshrc && abbr erase pal%d", i))
+				eraseCmd.Run()
+			}
+
+			lines := strings.Split(response, "\n")
+			for i, line := range lines {
+				if line != "" {
+					cmd := exec.Command("zsh", "-c", fmt.Sprintf(`source /home/scott/.zshrc && abbr pal%d="%s"`, i+1, line))
+					output, err := cmd.CombinedOutput()
+					if err != nil {
+						fmt.Printf("Error setting abbreviation: %v\nOutput: %s\n", err, output)
+					}
+				}
+			}
 		}
 
 		fmt.Println(response)
@@ -114,6 +144,49 @@ func main() {
 		}
 
 		fmt.Println(response)
+
+	case "--zsh-abbr":
+		// Check for existing temp dir
+		pattern := os.TempDir() + "/pal-zsh-abbr-*"
+		matches, err := filepath.Glob(pattern)
+		if err != nil {
+			fmt.Printf("Error checking for existing temp dir: %v\n", err)
+			os.Exit(1)
+		}
+
+		var tmpDir string
+		if len(matches) > 0 {
+			tmpDir = matches[0]
+		} else {
+			tmpDir, err = os.MkdirTemp("", "pal-zsh-abbr-")
+			if err != nil {
+				fmt.Printf("Error creating temp dir: %v\n", err)
+				os.Exit(1)
+			}
+
+			err = os.MkdirAll(tmpDir+"/zsh-job-queue", 0755)
+			if err != nil {
+				fmt.Printf("Error creating job queue dir: %v\n", err)
+				os.Exit(1)
+			}
+
+			err = os.WriteFile(tmpDir+"/zsh-job-queue/zsh-job-queue.zsh", []byte(zshJobQueueEmbed), 0755)
+			if err != nil {
+				fmt.Printf("Error writing job queue file: %v\n", err)
+				os.Exit(1)
+			}
+
+			err = os.WriteFile(tmpDir+"/zsh-abbr.zsh", []byte(zshAbbrEmbed), 0755)
+			if err != nil {
+				fmt.Printf("Error writing abbr file: %v\n", err)
+				os.Exit(1)
+			}
+		}
+
+		fmt.Println(tmpDir + "/zsh-abbr.zsh")
+
+	case "--fish-abbr":
+		fmt.Print(fishAbbrEmbed)
 	default:
 		fmt.Printf("Unknown command: %s\n", command)
 	}
