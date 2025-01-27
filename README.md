@@ -14,13 +14,13 @@ Perhaps unsurprisingly, xkcd [has](https://xkcd.com/1168/) elucidated the core s
 
 It's a single binary that you can just download into any location on your `$PATH`:
 
-```
+```sh
 # Show how to wget to /usr/local/bin
 ```
 
 If the command name `pal` is already taken on your system, feel free to give it a name of your choice.
 
-```
+```sh
 # Show how to wget to /usr/local/bin/hal
 ```
 
@@ -35,54 +35,79 @@ Supported providers:
 
 For interactive configuration, run:
 
-```
+```sh
 pal /config
-# Config file written to ~/.config/pal_helper/config.yaml
+# Config saved successfully at ~/.config/pal_helper/config.yaml
 ```
 
-### Completions
+### Abbreviations
 
-Autocompletion is an optional feature of `pal` that's highly recommended. To install the completions:
+Abbreviations are an optional feature of `pal` that are highly recommended. When they are enabled, you can autofill the contents of the suggestions from the last `pal` invocation like this:
 
+```sh
+pal1 # Hit space and first suggestion will be filled
+pal2 # Etc
 ```
-pal /complete
+
+Both `fish` and `zsh` are supported for abbreviations.
+
+To activate abbreviations for `fish` add the following to your `~/.config/fish/config.fish`:
+
+```sh
+pal --fish-abbr | source
 ```
+
+On `zsh` you will need the [zsh-abbr](https://github.com/olets/zsh-abbr) plugin. Pal contains a copy of zsh-abbr and you can install it by adding this to `~/.zshrc`:
+
+```sh
+source $(pal --zsh-abbr)
+```
+
+If you prefer to [install `zsh-abbr`](https://zsh-abbr.olets.dev/installation.html) another way, such as with a `zsh` plugin manager or a system package, then you don't need to add anything to `~/.zshrc`.
+
+Abbreviations for `zsh` must also be enabled in the `pal` config. You can run `pal /config` again or edit `~/.config/pal_helper/config.yaml` if you didn't enable them initially.
+
+> I'm a `fish` user, and I added `zsh` support after a bit of research into how to provide a similar experience. If you have ideas for how to make the `zsh` integration better or how to add support for your favorite shell, please open an issue on this repo and let me know. Thanks!
 
 ## Usage
 
-The basic usage pattern is to write `pal` and then your quesion:
+The basic usage pattern is to write `pal` and then describe or ask about the command you need:
 
-```
-pal How do I set a static IP for eth0?
+```sh
+pal Set a static IP for eth0
 ```
 
 `pal` asks the model to provide a short list of possible commands. If it does, they will be shown.
 
-If you have autocompletions enabled, you can now cycle through the suggestions as autocompletions for the `pal` command:
+If you have abbreviations enabled, you can expand the suggestions:
 
-```
-pal # Hit tab now
+```sh
+pal1 # Hit space to expand
 ```
 
-Sometimes a refusal message might be shown if the model can't or won't provide a command suggestion.
+Sometimes a refusal message might be shown if the model can't or won't provide a command suggestion. You can try again or switch to `/ask` mode to get more information.
 
 ### Ask mode
 
 `/ask` mode can be used to pass general queries through to the model, without an expectation that it will suggest shell commands in response.
 
-```
+```sh
 pal /ask Why is the sky blue?
 ```
 
-### Run mode
+### Special characters
 
-By default, `pal` does't have access to the output of other shell commands, such as those it suggests. To feed it the output of some command, use `/run`:
+In shells like `fish` and `zsh`, the `?` is reserved for globbing, and this will cause problems if you try to use it without quoting or escaping. Thankfully, it doesn't really matter if you just omit the question mark when asking a question to an LLM. Same goes for appostrophes, which are used for quoting by shells too.
 
+```sh
+pal /ask whats the reason LLMs dont need punctuation marks to understand me
 ```
-pal /run # Command that makes an error
-```
 
-Notice how you can add a comment after the command to include a question, instructions, or context.
+If necessary, you can pass special characters to `pal` by quoting them:
+
+```sh
+pal /ask what does this do: 'ls *.log'
+```
 
 ## Why?
 
