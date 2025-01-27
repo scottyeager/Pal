@@ -1,8 +1,8 @@
 # Pal
 
-`pal` is an AI assistant for terminals. The philosophy here is to feel like a classic shell utility with a bit of autocomplete magic.
+`pal` is an AI assistant for terminals. The philosophy here is to feel like a classic shell utility with a bit of magic.
 
-The primary focus will be supporting fish, zsh, and bash on Linux to start. MacOS might just work too.
+To start, `fish` and `zsh` are fully supported and testing is done on Linux only. MacOS might just work too.
 
 Perhaps unsurprisingly, xkcd [has](https://xkcd.com/1168/) elucidated the core situation inspiring this software:
 
@@ -15,13 +15,15 @@ Perhaps unsurprisingly, xkcd [has](https://xkcd.com/1168/) elucidated the core s
 It's a single binary that you can just download into any location on your `$PATH`:
 
 ```sh
-# Show how to wget to /usr/local/bin
+wget https://github.com/scottyeager/Pal/releases/download/v0.1.0/pal-linux-amd64 -O /usr/local/bin/pal
+chmod +x /usr/local/bin/pal
 ```
 
 If the command name `pal` is already taken on your system, feel free to give it a name of your choice.
 
 ```sh
-# Show how to wget to /usr/local/bin/hal
+wget https://github.com/scottyeager/Pal/releases/download/v0.1.0/pal-linux-amd64 -O /usr/local/bin/hal
+chmod +x /usr/local/bin/hal
 ```
 
 ### Config
