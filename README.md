@@ -21,11 +21,6 @@ chmod +x /usr/local/bin/pal
 
 If the command name `pal` is already taken on your system, feel free to give it a name of your choice.
 
-```sh
-wget https://github.com/scottyeager/Pal/releases/download/v0.1.0/pal-linux-amd64 -O /usr/local/bin/hal
-chmod +x /usr/local/bin/hal
-```
-
 ### Config
 
 You will need to provide an API key for an LLM provider.
@@ -53,23 +48,29 @@ pal2 # Etc
 
 Both `fish` and `zsh` are supported for abbreviations.
 
+#### fish
+
 To activate abbreviations for `fish` add the following to your `~/.config/fish/config.fish`:
 
 ```sh
 pal --fish-abbr | source
 ```
 
-On `zsh` you will need the [zsh-abbr](https://github.com/olets/zsh-abbr) plugin. Pal contains a copy of zsh-abbr and you can install it by adding this to `~/.zshrc`:
+#### zsh
+
+On `zsh` you will need the [zsh-abbr](https://github.com/olets/zsh-abbr) plugin. Broadly, there are two ways to install it:
+
+1. Pal contains a copy of zsh-abbr and you can install it by adding this to `~/.zshrc`:
 
 ```sh
 source $(pal --zsh-abbr)
 ```
 
-If you prefer to [install `zsh-abbr`](https://zsh-abbr.olets.dev/installation.html) another way, such as with a `zsh` plugin manager or a system package, then you don't need to add anything to `~/.zshrc`.
+2. If you prefer, [install `zsh-abbr`](https://zsh-abbr.olets.dev/installation.html) in one of the usual ways, such as with a `zsh` plugin manager or a system package
 
 Abbreviations for `zsh` must also be enabled in the `pal` config. You can run `pal /config` again or edit `~/.config/pal_helper/config.yaml` if you didn't enable them initially.
 
-> I'm a `fish` user, and I added `zsh` support after a bit of research into how to provide a similar experience. If you have ideas for how to make the `zsh` integration better or how to add support for your favorite shell, please open an issue on this repo and let me know. Thanks!
+> Note: I'm a `fish` user, and I added `zsh` support after a bit of research into how to provide a similar experience. If you have ideas for how to make the `zsh` integration better or how to add support for your favorite shell, please open an issue on this repo and let me know. Thanks!
 
 ## Usage
 
@@ -94,7 +95,7 @@ Sometimes a refusal message might be shown if the model can't or won't provide a
 `/ask` mode can be used to pass general queries through to the model, without an expectation that it will suggest shell commands in response.
 
 ```sh
-pal /ask Why is the sky blue?
+pal /ask Why is the sky blue
 ```
 
 ### Special characters
