@@ -8,7 +8,7 @@ Perhaps unsurprisingly, xkcd [has](https://xkcd.com/1168/) elucidated the core s
 
 <img width="713" alt="image" src="https://github.com/user-attachments/assets/93f58393-2de7-466e-ba30-9fa2e32635af" />
 
-'pal' helps diffuse the bomb that nukes your focus when leaving the shell to surf for answers on the web.
+`pal` helps diffuse the bomb that nukes our focus when leaving the shell to surf for answers on the web.
 
 ## Quickstart
 
