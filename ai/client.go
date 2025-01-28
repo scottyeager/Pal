@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -12,19 +13,23 @@ import (
 )
 
 type Client struct {
-	client *openai.Client
-	model  string
+	client   *openai.Client
+	provider config.Provider
+	model    string
 }
 
 func NewClient(cfg *config.Config) (*Client, error) {
+	provider := cfg.Providers[cfg.SelectedProvider]
+	model := cfg.SelectedModel
 	client := openai.NewClient(
-		option.WithAPIKey(cfg.APIKey),
-		option.WithBaseURL("https://api.deepseek.com"),
+		option.WithAPIKey(provider.APIKey),
+		option.WithBaseURL(provider.URL),
 	)
 
 	return &Client{
-		client: client,
-		model:  "deepseek-chat",
+		client:   client,
+		provider: provider,
+		model:    model,
 	}, nil
 }
 
@@ -54,6 +59,12 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 
 	completion := resp.Choices[0].Message.Content
 
+	// Remove <think> block if present
+	if thinkStart := strings.Index(completion, "<think>"); thinkStart != -1 {
+		if thinkEnd := strings.Index(completion, "</think>"); thinkEnd != -1 {
+			completion = completion[:thinkStart] + strings.TrimSpace(completion[thinkEnd+len("</think>"):])
+		}
+	}
 	if storeCompletion {
 		// Store the completion
 		storagePath, err := GetCompletionStoragePath()

@@ -24,18 +24,67 @@ func Configure() {
 	}
 
 	existingCfg, err := config.LoadConfig()
-	var apiKey string
-	if err == nil && existingCfg.APIKey != "" {
-		fmt.Println("Only DeepSeek is supported as an LLM provider for now. More coming soon.")
-		fmt.Printf("Found existing API key. Press enter to keep it, or enter a new one: ")
-		fmt.Scanln(&apiKey)
-		if apiKey == "" {
-			apiKey = existingCfg.APIKey
+	// Check for configured providers
+	providers := make(map[string]config.Provider)
+	if existingCfg != nil && existingCfg.Providers != nil {
+		fmt.Println("Already configured providers:")
+		for name := range existingCfg.Providers {
+			fmt.Println(name)
 		}
-	} else {
-		fmt.Println("Only DeepSeek is supported as an LLM provider for now. More coming soon.")
-		fmt.Print("Enter your API key: ")
-		fmt.Scanln(&apiKey)
+		fmt.Println()
+	}
+
+	// Display available provider templates
+	templates := make([]string, 0, len(config.ProviderTemplates))
+	for name := range config.ProviderTemplates {
+		templates = append(templates, name)
+	}
+
+	for {
+		fmt.Println("\nAvailable provider templates:")
+		for i, t := range templates {
+			fmt.Printf("%d. %s\n", i+1, t)
+		}
+		fmt.Println("\n0. Done adding providers")
+
+		// Get user choice
+		var choice int
+		for {
+			fmt.Print("\nSelect provider (0-" + fmt.Sprint(len(templates)) + "): ")
+			fmt.Scanln(&choice)
+
+			if choice >= 0 && choice <= len(templates) {
+				break
+			}
+			fmt.Println("Invalid choice. Please try again.")
+		}
+
+		if choice == 0 {
+			break
+		}
+
+		selectedProvider := templates[choice-1]
+
+		// Prompt for API key
+		var apiKey string
+		if err == nil && existingCfg != nil && existingCfg.Providers != nil {
+			provider, exists := existingCfg.Providers[selectedProvider]
+			if exists && provider.APIKey != "" {
+				fmt.Printf("Found existing API key for %s. Press enter to keep it, or enter a new one: ", selectedProvider)
+				fmt.Scanln(&apiKey)
+				if apiKey == "" {
+					apiKey = provider.APIKey
+				}
+			} else {
+				fmt.Printf("Enter your %s API key: ", selectedProvider)
+				fmt.Scanln(&apiKey)
+			}
+		} else {
+			fmt.Printf("Enter your %s API key: ", selectedProvider)
+			fmt.Scanln(&apiKey)
+		}
+
+		providers[selectedProvider] = config.NewProvider(selectedProvider, apiKey)
 	}
 
 	ppid := os.Getppid()
@@ -67,7 +116,7 @@ func Configure() {
 	}
 
 	cfg := &config.Config{
-		APIKey:             apiKey,
+		Providers:          providers,
 		ZshAbbreviations:   enableZshAbbreviations,
 		AbbreviationPrefix: prefix,
 	}

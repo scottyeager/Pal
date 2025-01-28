@@ -9,9 +9,11 @@ import (
 )
 
 type Config struct {
-	APIKey             string `yaml:"api_key"`
-	ZshAbbreviations   bool   `yaml:"zsh_abbreviations"`
-	AbbreviationPrefix string `yaml:"abbreviation_prefix"`
+	ZshAbbreviations   bool                `yaml:"zsh_abbreviations"`
+	AbbreviationPrefix string              `yaml:"abbreviation_prefix"`
+	Providers          map[string]Provider `yaml:"providers"`
+	SelectedProvider   string              `yaml:"selected_provider"`
+	SelectedModel      string              `yaml:"selected_model"`
 }
 
 func GetConfigPath() (string, error) {

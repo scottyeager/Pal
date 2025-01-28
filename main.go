@@ -70,22 +70,15 @@ func main() {
 	switch command {
 	case "/help":
 		showHelp()
+	case "/models":
+		cfg, err := config.LoadConfig()
+		if err != nil {
+			fmt.Printf("Error loading config: %v\n", err)
+			os.Exit(1)
+		}
+		cmd.Models(cfg)
 	case "/config":
 		cmd.Configure()
-	case "/complete":
-		path, err := ai.GetCompletionStoragePath()
-		if err != nil {
-			fmt.Printf("Error getting completion path: %v\n", err)
-			os.Exit(1)
-		}
-
-		data, err := os.ReadFile(path)
-		if err != nil {
-			fmt.Printf("Error reading completion file: %v\n", err)
-			os.Exit(1)
-		}
-
-		fmt.Print(string(data))
 	case "/show":
 		path, err := ai.GetCompletionStoragePath()
 		if err != nil {
