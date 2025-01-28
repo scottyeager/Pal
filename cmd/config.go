@@ -38,20 +38,36 @@ func Configure() {
 		fmt.Scanln(&apiKey)
 	}
 
+	var prefix string
+	if existingCfg != nil && existingCfg.AbbreviationPrefix != "" {
+		fmt.Printf("Current abbreviation prefix is '%s'. Press enter to keep it, or enter a new one: ", existingCfg.AbbreviationPrefix)
+		fmt.Scanln(&prefix)
+		if prefix == "" {
+			prefix = existingCfg.AbbreviationPrefix
+		}
+	} else {
+		fmt.Print("Enter abbreviation prefix (default 'pal'): ")
+		fmt.Scanln(&prefix)
+		if prefix == "" {
+			prefix = "pal"
+		}
+	}
+
 	shell := os.Getppid()
 	bytes, err := os.ReadFile("/proc/" + fmt.Sprint(shell) + "/comm")
 	processName := strings.TrimSpace(string(bytes))
 
 	var enableZshAbbreviations bool
 	if filepath.Base(processName) == "zsh" {
-		fmt.Print("Do you want to enable zsh abbreviations? This requires the zsh-abbr plugin. (y/N): ")
+		fmt.Print("Do you want to enable zsh abbreviations? This requires the zsh-abbr plugin. Any abbreviations matching the prefix pattern will be overwritten. (y/N): ")
 		var response string
 		fmt.Scanln(&response)
 		enableZshAbbreviations = response == "y" || response == "Y"
 	}
 	cfg := &config.Config{
-		APIKey:           apiKey,
-		ZshAbbreviations: enableZshAbbreviations,
+		APIKey:             apiKey,
+		ZshAbbreviations:   enableZshAbbreviations,
+		AbbreviationPrefix: prefix,
 	}
 
 	if err := config.SaveConfig(cfg); err != nil {

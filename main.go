@@ -30,16 +30,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		fmt.Printf("Error loading config: %v\n", err)
+		os.Exit(1)
+	}
 	command := os.Args[1]
 
 	if !strings.HasPrefix(command, "/") && !strings.HasPrefix(command, "-") {
 		// If no command is specified, treat the entire input as a question
 		question := strings.Join(os.Args[1:], " ")
-		cfg, err := config.LoadConfig()
-		if err != nil {
-			fmt.Printf("Error loading config: %v\n", err)
-			os.Exit(1)
-		}
 
 		aiClient, err := ai.NewClient(cfg)
 		if err != nil {
@@ -219,6 +219,7 @@ func main() {
 		fmt.Println(tmpDir + "/zsh-abbr.zsh")
 
 	case "--fish-abbr":
+		fmt.Println(`set -l pal_prefix "` + cfg.AbbreviationPrefix + `"`)
 		fmt.Print(fishAbbrEmbed)
 	default:
 		fmt.Printf("Unknown command: %s\n", command)
