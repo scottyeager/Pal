@@ -64,7 +64,8 @@ func main() {
 			lines := strings.Split(response, "\n")
 			for i, line := range lines {
 				if line != "" {
-					cmd := exec.Command("zsh", "-c", fmt.Sprintf(`source /home/scott/.zshrc && abbr pal%d="%s"`, i+1, line))
+					home, _ := os.UserHomeDir()
+					cmd := exec.Command("zsh", "-c", fmt.Sprintf(`source %s/.zshrc && abbr pal%d="%s"`, home, i+1, line))
 					output, err := cmd.CombinedOutput()
 					if err != nil {
 						fmt.Printf("Error setting abbreviation: %v\nOutput: %s\n", err, output)
