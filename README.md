@@ -15,7 +15,7 @@ Perhaps unsurprisingly, xkcd [has](https://xkcd.com/1168/) elucidated the core s
 It's a single binary that you can just download into any location on your `$PATH`:
 
 ```sh
-wget https://github.com/scottyeager/Pal/releases/download/v0.2.0/pal-linux-amd64 -O /usr/local/bin/pal
+wget https://github.com/scottyeager/Pal/releases/latest/download/pal-linux-amd64 -O /usr/local/bin/pal
 chmod +x /usr/local/bin/pal
 ```
 
@@ -28,7 +28,9 @@ You will need to provide an API key for an LLM provider.
 Supported providers:
 
 * DeepSeek
-* Others coming soon (OpenAI, Anthropic, Ollama, ...?)
+* Hugging Face Inference API
+* Any OpenAI compatible provider (manual config)
+* Coming soon: Anthropic
 
 For interactive configuration, run:
 
