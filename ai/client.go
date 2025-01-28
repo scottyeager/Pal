@@ -33,12 +33,56 @@ func NewClient(cfg *config.Config) (*Client, error) {
 	}, nil
 }
 
-func GetCompletionStoragePath() (string, error) {
+func GetStoredCompletion() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("failed to get home directory: %w", err)
 	}
-	return filepath.Join(homeDir, ".local", "share", "pal_helper", "completions.txt"), nil
+	storagePath := filepath.Join(homeDir, ".local", "share", "pal_helper", "completions.txt")
+
+	// Ensure directory exists
+	storageDir := filepath.Dir(storagePath)
+	if err := os.MkdirAll(storageDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create storage directory: %w", err)
+	}
+
+	// Create file if it doesn't exist
+	if _, err := os.Stat(storagePath); os.IsNotExist(err) {
+		file, err := os.Create(storagePath)
+		if err != nil {
+			return "", fmt.Errorf("failed to create storage file: %w", err)
+		}
+		file.Close()
+	}
+
+	// Read file contents
+	content, err := os.ReadFile(storagePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read completion file: %w", err)
+	}
+
+	return string(content), nil
+}
+
+func StoreCompletion(completion string) error {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %w", err)
+	}
+	storagePath := filepath.Join(homeDir, ".local", "share", "pal_helper", "completions.txt")
+
+	// Ensure directory exists
+	storageDir := filepath.Dir(storagePath)
+	if err := os.MkdirAll(storageDir, 0755); err != nil {
+		return fmt.Errorf("failed to create storage directory: %w", err)
+	}
+
+	// Write completion to file
+	if err := os.WriteFile(storagePath, []byte(completion), 0644); err != nil {
+		return fmt.Errorf("failed to write completion: %w", err)
+	}
+
+	return nil
 }
 
 func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt string, storeCompletion bool) (string, error) {
@@ -67,26 +111,9 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 	}
 	if storeCompletion {
 		// Store the completion
-		storagePath, err := GetCompletionStoragePath()
+		err = StoreCompletion(completion)
 		if err != nil {
-			return completion, fmt.Errorf("failed to get storage path: %w", err)
-		}
-
-		// Create directory if it doesn't exist
-		storageDir := filepath.Dir(storagePath)
-		if err := os.MkdirAll(storageDir, 0755); err != nil {
-			return completion, fmt.Errorf("failed to create storage directory: %w", err)
-		}
-
-		// Write completion to file
-		file, err := os.OpenFile(storagePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-		if err != nil {
-			return completion, fmt.Errorf("failed to open storage file: %w", err)
-		}
-		defer file.Close()
-
-		if _, err := file.WriteString(completion + "\n"); err != nil {
-			return completion, fmt.Errorf("failed to write completion: %w", err)
+			return completion, fmt.Errorf("failed to write to disk: %w", err)
 		}
 	}
 

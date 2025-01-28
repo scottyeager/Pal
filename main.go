@@ -80,15 +80,9 @@ func main() {
 	case "/config":
 		cmd.Configure()
 	case "/show":
-		path, err := ai.GetCompletionStoragePath()
+		data, err := ai.GetStoredCompletion()
 		if err != nil {
-			fmt.Printf("Error getting completion path: %v\n", err)
-			os.Exit(1)
-		}
-
-		data, err := os.ReadFile(path)
-		if err != nil {
-			fmt.Printf("Error reading completion file: %v\n", err)
+			fmt.Printf("Error reading data from disk: %v\n", err)
 			os.Exit(1)
 		}
 

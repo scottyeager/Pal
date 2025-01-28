@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/scottyeager/pal/abbr"
+	"github.com/scottyeager/pal/ai"
 	"github.com/scottyeager/pal/config"
 )
 
@@ -27,6 +29,7 @@ func Configure() {
 	// Check for configured providers
 	providers := make(map[string]config.Provider)
 	if existingCfg != nil && existingCfg.Providers != nil {
+		providers = existingCfg.Providers
 		fmt.Println("Already configured providers:")
 		for name := range existingCfg.Providers {
 			fmt.Println(name)
@@ -45,22 +48,19 @@ func Configure() {
 		for i, t := range templates {
 			fmt.Printf("%d. %s\n", i+1, t)
 		}
-		fmt.Println("\n0. Done adding providers")
+		fmt.Printf("\nPress enter when done, or select provider (1-%d): ", len(templates))
 
-		// Get user choice
-		var choice int
-		for {
-			fmt.Print("\nSelect provider (0-" + fmt.Sprint(len(templates)) + "): ")
-			fmt.Scanln(&choice)
-
-			if choice >= 0 && choice <= len(templates) {
-				break
-			}
-			fmt.Println("Invalid choice. Please try again.")
+		var input string
+		fmt.Scanln(&input)
+		if input == "" {
+			break
 		}
 
-		if choice == 0 {
-			break
+		var choice int
+		fmt.Sscanf(input, "%d", &choice)
+		if choice < 1 || choice > len(templates) {
+			fmt.Println("Invalid choice. Please try again.")
+			continue
 		}
 
 		selectedProvider := templates[choice-1]
@@ -97,7 +97,16 @@ func Configure() {
 		fmt.Scanln(&prefix)
 		if prefix == "" {
 			prefix = existingCfg.AbbreviationPrefix
+		} else {
+			data, err := ai.GetStoredCompletion()
+			if err != nil {
+				fmt.Printf("Error reading data from disk: %v\n", err)
+			}
+			if data != "" {
+				abbr.UpdateZshAbbreviations(existingCfg.AbbreviationPrefix, prefix, data)
+			}
 		}
+
 		// TODO: if we are changing the prefix and zsh abbreviations were enabled, we should move them from old to new now. If shell is fish, we should offer to update the abbr by sourcing --fish-abbr
 	} else {
 		fmt.Print("Enter abbreviation prefix (default 'pal'): ")
@@ -109,10 +118,22 @@ func Configure() {
 
 	var enableZshAbbreviations bool
 	if filepath.Base(shell) == "zsh" {
-		fmt.Print(`Do you want to enable zsh abbreviations? This requires the zsh-abbr plugin. Any abbreviations with the form "$prefix$i" will be overwritten. (y/N): `)
+		var defaultYes bool
+		if existingCfg != nil {
+			defaultYes = existingCfg.ZshAbbreviations
+		}
+		if defaultYes {
+			fmt.Print(`Do you want to enable zsh abbreviations? This requires the zsh-abbr plugin. Any abbreviations with the form "$prefix$i" will be overwritten. (Y/n): `)
+		} else {
+			fmt.Print(`Do you want to enable zsh abbreviations? This requires the zsh-abbr plugin. Any abbreviations with the form "$prefix$i" will be overwritten. (y/N): `)
+		}
 		var response string
 		fmt.Scanln(&response)
-		enableZshAbbreviations = response == "y" || response == "Y"
+		if defaultYes {
+			enableZshAbbreviations = response != "n" && response != "N"
+		} else {
+			enableZshAbbreviations = response == "y" || response == "Y"
+		}
 	}
 
 	cfg := &config.Config{
