@@ -6,9 +6,9 @@ For now, `fish` and `zsh` are fully supported and testing is done on Linux only.
 
 Perhaps unsurprisingly, xkcd [has](https://xkcd.com/1168/) elucidated the core situation inspiring this software:
 
-<img width="713" alt="image" src="https://github.com/user-attachments/assets/93f58393-2de7-466e-ba30-9fa2e32635af" />
+<br><img width="713" alt="image" src="https://github.com/user-attachments/assets/93f58393-2de7-466e-ba30-9fa2e32635af" />
 
-`pal` helps diffuse the bomb that nukes our focus when leaving the shell to surf for answers on the web.
+<br>`pal` helps diffuse the bomb that nukes our focus when leaving the shell to surf for answers on the web.
 
 ## Quickstart
 
