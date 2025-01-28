@@ -5,10 +5,10 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
+	"github.com/scottyeager/pal/abbr"
 	"github.com/scottyeager/pal/ai"
 	"github.com/scottyeager/pal/cmd"
 	"github.com/scottyeager/pal/config"
@@ -56,53 +56,10 @@ func main() {
 		}
 
 		if cfg.ZshAbbreviations {
-			abbrFile := os.Getenv("ABBR_USER_ABBREVIATIONS_FILE")
-			if abbrFile == "" {
-				home, _ := os.UserHomeDir()
-				abbrFile = filepath.Join(home, ".config/zsh-abbr/user-abbreviations")
-			}
-
-			// Read existing abbreviations
-			content, err := os.ReadFile(abbrFile)
-			if err != nil && !os.IsNotExist(err) {
-				fmt.Printf("Error reading abbreviations file: %v\n", err)
+			prefix := cfg.AbbreviationPrefix
+			if err := abbr.UpdateZshAbbreviations(prefix, prefix, response); err != nil {
+				fmt.Printf("%v\n", err)
 				return
-			}
-
-			// Filter out existing pal abbreviations
-			var newLines []string
-			for _, line := range strings.Split(string(content), "\n") {
-				if !strings.HasPrefix(line, "abbr pal") {
-					if line != "" {
-						newLines = append(newLines, line)
-					}
-				}
-			}
-
-			// Add new pal abbreviations
-			lines := strings.Split(response, "\n")
-			for i, line := range lines {
-				if line != "" {
-					newLines = append(newLines, fmt.Sprintf(`abbr pal%d="%s"`, i+1, line))
-				}
-			}
-
-			// Write back to file
-			err = os.MkdirAll(filepath.Dir(abbrFile), 0755)
-			if err != nil {
-				fmt.Printf("Error creating directories: %v\n", err)
-				return
-			}
-
-			err = os.WriteFile(abbrFile, []byte(strings.Join(newLines, "\n")+"\n"), 0644)
-			if err != nil {
-				fmt.Printf("Error writing abbreviations file: %v\n", err)
-				return
-			}
-			// Reload the abbreviations in the current shell
-			cmd := exec.Command("zsh", "-c", "source ~/.zshrc && abbr load")
-			if err := cmd.Run(); err != nil {
-				fmt.Printf("Error reloading abbreviations: %v\n", err)
 			}
 		}
 
@@ -149,6 +106,15 @@ func main() {
 				fmt.Printf("%d: %s\n", i+1, cmd)
 			}
 		}
+
+		if cfg.ZshAbbreviations {
+			prefix := cfg.AbbreviationPrefix
+			if err := abbr.UpdateZshAbbreviations(prefix, prefix, string(data)); err != nil {
+				fmt.Printf("%v\n", err)
+				return
+			}
+		}
+
 	case "/ask":
 		if len(os.Args) < 3 {
 			fmt.Println("Usage: pal /ask <question>")

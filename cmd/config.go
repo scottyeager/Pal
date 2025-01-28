@@ -38,6 +38,10 @@ func Configure() {
 		fmt.Scanln(&apiKey)
 	}
 
+	ppid := os.Getppid()
+	bytes, err := os.ReadFile("/proc/" + fmt.Sprint(ppid) + "/comm")
+	shell := strings.TrimSpace(string(bytes))
+
 	var prefix string
 	if existingCfg != nil && existingCfg.AbbreviationPrefix != "" {
 		fmt.Printf("Current abbreviation prefix is '%s'. Press enter to keep it, or enter a new one: ", existingCfg.AbbreviationPrefix)
@@ -45,6 +49,7 @@ func Configure() {
 		if prefix == "" {
 			prefix = existingCfg.AbbreviationPrefix
 		}
+		// TODO: if we are changing the prefix and zsh abbreviations were enabled, we should move them from old to new now. If shell is fish, we should offer to update the abbr by sourcing --fish-abbr
 	} else {
 		fmt.Print("Enter abbreviation prefix (default 'pal'): ")
 		fmt.Scanln(&prefix)
@@ -53,17 +58,14 @@ func Configure() {
 		}
 	}
 
-	shell := os.Getppid()
-	bytes, err := os.ReadFile("/proc/" + fmt.Sprint(shell) + "/comm")
-	processName := strings.TrimSpace(string(bytes))
-
 	var enableZshAbbreviations bool
-	if filepath.Base(processName) == "zsh" {
-		fmt.Print("Do you want to enable zsh abbreviations? This requires the zsh-abbr plugin. Any abbreviations matching the prefix pattern will be overwritten. (y/N): ")
+	if filepath.Base(shell) == "zsh" {
+		fmt.Print(`Do you want to enable zsh abbreviations? This requires the zsh-abbr plugin. Any abbreviations with the form "$prefix$i" will be overwritten. (y/N): `)
 		var response string
 		fmt.Scanln(&response)
 		enableZshAbbreviations = response == "y" || response == "Y"
 	}
+
 	cfg := &config.Config{
 		APIKey:             apiKey,
 		ZshAbbreviations:   enableZshAbbreviations,
