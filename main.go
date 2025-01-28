@@ -56,21 +56,53 @@ func main() {
 		}
 
 		if cfg.ZshAbbreviations {
-			for i := 1; i <= 9; i++ {
-				eraseCmd := exec.Command("zsh", "-c", fmt.Sprintf("source ~/.zshrc && abbr erase pal%d", i))
-				eraseCmd.Run()
+			abbrFile := os.Getenv("ABBR_USER_ABBREVIATIONS_FILE")
+			if abbrFile == "" {
+				home, _ := os.UserHomeDir()
+				abbrFile = filepath.Join(home, ".config/zsh-abbr/user-abbreviations")
 			}
 
+			// Read existing abbreviations
+			content, err := os.ReadFile(abbrFile)
+			if err != nil && !os.IsNotExist(err) {
+				fmt.Printf("Error reading abbreviations file: %v\n", err)
+				return
+			}
+
+			// Filter out existing pal abbreviations
+			var newLines []string
+			for _, line := range strings.Split(string(content), "\n") {
+				if !strings.HasPrefix(line, "abbr pal") {
+					if line != "" {
+						newLines = append(newLines, line)
+					}
+				}
+			}
+
+			// Add new pal abbreviations
 			lines := strings.Split(response, "\n")
 			for i, line := range lines {
 				if line != "" {
-					home, _ := os.UserHomeDir()
-					cmd := exec.Command("zsh", "-c", fmt.Sprintf(`source %s/.zshrc && abbr pal%d="%s"`, home, i+1, line))
-					output, err := cmd.CombinedOutput()
-					if err != nil {
-						fmt.Printf("Error setting abbreviation: %v\nOutput: %s\n", err, output)
-					}
+					newLines = append(newLines, fmt.Sprintf(`abbr pal%d="%s"`, i+1, line))
 				}
+			}
+
+			// Write back to file
+			err = os.MkdirAll(filepath.Dir(abbrFile), 0755)
+			if err != nil {
+				fmt.Printf("Error creating directories: %v\n", err)
+				return
+			}
+
+			err = os.WriteFile(abbrFile, []byte(strings.Join(newLines, "\n")+"\n"), 0644)
+			if err != nil {
+				fmt.Printf("Error writing abbreviations file: %v\n", err)
+				return
+			}
+			// Reload the abbreviations in the current shell
+			cmd := exec.Command("zsh", "-c", "source ~/.zshrc && abbr load")
+			if err := cmd.Run(); err != nil {
+				fmt.Printf("Error reloading abbreviations: %v\n", err)
 			}
 		}
 
