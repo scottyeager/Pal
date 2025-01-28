@@ -114,6 +114,16 @@ If necessary, you can pass special characters to `pal` by quoting them:
 pal /ask what does this do: 'ls *.log'
 ```
 
+### Model selection
+
+The `/models` command is used to select models and also check the currently selected model:
+
+```
+pal /models
+```
+
+For providers added through interactive config, a default set of models will be included. Depending on the provider, additional models may be available that could be added by editing the config file directly.
+
 ## Why?
 
 There are other terminal based AI projects, so why build another one? The short answer is that none quite provided the experience I wanted for this particular use case.
