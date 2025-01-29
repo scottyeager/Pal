@@ -7,30 +7,48 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/anthropics/anthropic-sdk-go"
+	"github.com/anthropics/anthropic-sdk-go/option"
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 	"github.com/scottyeager/pal/config"
 )
 
 type Client struct {
-	client   *openai.Client
-	provider config.Provider
-	model    string
+	openaiClient   *openai.Client
+	anthropicClient *anthropic.Client
+	provider       config.Provider
+	model          string
+	providerName   string
 }
 
 func NewClient(cfg *config.Config) (*Client, error) {
 	parts := strings.SplitN(cfg.SelectedModel, "/", 2)
-	provider_name, model := parts[0], parts[1]
-	provider := cfg.Providers[provider_name]
-	client := openai.NewClient(
-		option.WithAPIKey(provider.APIKey),
-		option.WithBaseURL(provider.URL),
-	)
+	providerName, model := parts[0], parts[1]
+	provider := cfg.Providers[providerName]
+
+	var openaiClient *openai.Client
+	var anthropicClient *anthropic.Client
+
+	switch providerName {
+	case "anthropic":
+		anthropicClient = anthropic.NewClient(
+			option.WithAPIKey(provider.APIKey),
+			option.WithBaseURL(provider.URL),
+		)
+	default:
+		openaiClient = openai.NewClient(
+			option.WithAPIKey(provider.APIKey),
+			option.WithBaseURL(provider.URL),
+		)
+	}
 
 	return &Client{
-		client:   client,
-		provider: provider,
-		model:    model,
+		openaiClient:   openaiClient,
+		anthropicClient: anthropicClient,
+		provider:       provider,
+		model:          model,
+		providerName:   providerName,
 	}, nil
 }
 
@@ -87,22 +105,48 @@ func StoreCompletion(completion string) error {
 }
 
 func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt string, storeCompletion bool) (string, error) {
-	resp, err := c.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
-			openai.SystemMessage(system_prompt),
-			openai.UserMessage(prompt),
-		}),
-		Model: openai.F(c.model),
-	})
-	if err != nil {
-		return "", fmt.Errorf("failed to get completion: %w", err)
-	}
+	var completion string
+	var err error
 
-	if len(resp.Choices) == 0 {
-		return "", fmt.Errorf("no completion choices returned")
-	}
+	if c.providerName == "anthropic" {
+		message, err := c.anthropicClient.Messages.New(ctx, anthropic.MessageNewParams{
+			Model:     anthropic.F(c.model),
+			MaxTokens: anthropic.F(int64(1024)),
+			System:    anthropic.F([]anthropic.TextBlockParam{
+				anthropic.NewTextBlock(system_prompt),
+			}),
+			Messages: anthropic.F([]anthropic.MessageParam{
+				anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
+			}),
+		})
+		if err != nil {
+			return "", fmt.Errorf("failed to get completion: %w", err)
+		}
+		
+		// Extract text content from message
+		for _, block := range message.Content {
+			if textBlock, ok := block.AsUnion().(anthropic.TextBlock); ok {
+				completion += textBlock.Text
+			}
+		}
+	} else {
+		resp, err := c.openaiClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+			Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+				openai.SystemMessage(system_prompt),
+				openai.UserMessage(prompt),
+			}),
+			Model: openai.F(c.model),
+		})
+		if err != nil {
+			return "", fmt.Errorf("failed to get completion: %w", err)
+		}
 
-	completion := resp.Choices[0].Message.Content
+		if len(resp.Choices) == 0 {
+			return "", fmt.Errorf("no completion choices returned")
+		}
+
+		completion = resp.Choices[0].Message.Content
+	}
 
 	// Remove <think> block if present
 	if thinkStart := strings.Index(completion, "<think>"); thinkStart != -1 {
