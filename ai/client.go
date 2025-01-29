@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/anthropics/anthropic-sdk-go"
-	"github.com/anthropics/anthropic-sdk-go/option"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
+	anthropic "github.com/anthropics/anthropic-sdk-go"
+	anthropicOption "github.com/anthropics/anthropic-sdk-go/option"
+	openai "github.com/openai/openai-go"
+	openaiOption "github.com/openai/openai-go/option"
 	"github.com/scottyeager/pal/config"
 )
 
@@ -33,13 +33,13 @@ func NewClient(cfg *config.Config) (*Client, error) {
 	switch providerName {
 	case "anthropic":
 		anthropicClient = anthropic.NewClient(
-			option.WithAPIKey(provider.APIKey),
-			option.WithBaseURL(provider.URL),
+			anthropicOption.WithAPIKey(provider.APIKey),
+			anthropicOption.WithBaseURL(provider.URL),
 		)
 	default:
 		openaiClient = openai.NewClient(
-			option.WithAPIKey(provider.APIKey),
-			option.WithBaseURL(provider.URL),
+			openaiOption.WithAPIKey(provider.APIKey),
+			openaiOption.WithBaseURL(provider.URL),
 		)
 	}
 
