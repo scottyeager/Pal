@@ -78,7 +78,7 @@ Abbreviations for `zsh` must also be enabled in the `pal` config. You can run `p
 
 The basic usage pattern is to write `pal` and then describe or ask about the command you need:
 
-```sh
+```
 pal Set a static IP for eth0
 ```
 
@@ -128,7 +128,7 @@ For providers added through interactive config, a default set of models will be 
 
 There are other terminal based AI projects, so why build another one? The short answer is that none quite provided the experience I wanted for this particular use case.
 
-One category of in shell assistants drop you into a whole new shell enviroment. This is great for some uses cases, such as the excellent [Aider] project. But I'm still spending a lot of time in my good ol' shell.
+One category of in shell assistants drop you into a whole new shell enviroment. This is great for some uses cases, such as the excellent [Aider](https://github.com/Aider-AI/aider) project. But I'm still spending a lot of time in my good ol' shell.
 
 Another category leans a bit more toward a TUI, showing a menu of results on the screen to choose from, for example. The experince I desire is closer to a classic shell utility—like an `ls` that lists ideas for the next command to run, instead of listing files.
 
