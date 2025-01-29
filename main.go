@@ -23,6 +23,16 @@ var zshJobQueueEmbed string
 //go:embed abbr.fish
 var fishAbbrEmbed string
 
+func checkConfiguration(cfg *config.Config) error {
+	if len(cfg.Providers) == 0 {
+		return fmt.Errorf("No providers configured. Run 'pal /config' to set up a provider")
+	}
+	if cfg.SelectedModel == "" {
+		return fmt.Errorf("No model selected. Run 'pal /models' to select a model")
+	}
+	return nil
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: pal <command>")
@@ -40,6 +50,11 @@ func main() {
 	if !strings.HasPrefix(command, "/") && !strings.HasPrefix(command, "-") {
 		// If no command is specified, treat the entire input as a question
 		question := strings.Join(os.Args[1:], " ")
+
+		if err := checkConfiguration(cfg); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 
 		aiClient, err := ai.NewClient(cfg)
 		if err != nil {
@@ -111,6 +126,11 @@ func main() {
 		cfg, err := config.LoadConfig()
 		if err != nil {
 			fmt.Printf("Error loading config: %v\n", err)
+			os.Exit(1)
+		}
+
+		if err := checkConfiguration(cfg); err != nil {
+			fmt.Println(err)
 			os.Exit(1)
 		}
 

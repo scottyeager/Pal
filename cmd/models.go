@@ -15,15 +15,19 @@ func Models(cfg *config.Config) {
 			models = append(models, fmt.Sprintf("%s/%s", provider, model))
 		}
 	}
-	fmt.Println("Available models:")
+	fmt.Println("\nAvailable models:")
 	for i, model := range models {
 		fmt.Printf("%d. %s\n", i+1, model)
 	}
-	fmt.Printf("\nCurrently selected: %s/%s\n", cfg.SelectedProvider, cfg.SelectedModel)
-	fmt.Print("\nEnter model number or press Enter to keep current: ")
-	var selectedNumber string
-	fmt.Scanln(&selectedNumber)
 
+	selectedNumber := "1"
+	if cfg.SelectedModel != "" {
+		fmt.Printf("\nCurrently selected: %s\n", cfg.SelectedModel)
+		fmt.Print("\nEnter model number or press Enter to keep current: ")
+	} else {
+		fmt.Print("\nEnter model number or press Enter for default (1): ")
+	}
+	fmt.Scanln(&selectedNumber)
 	if selectedNumber == "" {
 		return
 	}
@@ -58,8 +62,7 @@ func Models(cfg *config.Config) {
 		os.Exit(1)
 	}
 
-	cfg.SelectedProvider = provider
-	cfg.SelectedModel = model
+	cfg.SelectedModel = provider + "/" + model
 	if err := config.SaveConfig(cfg); err != nil {
 		fmt.Printf("Error saving config: %v\n", err)
 		os.Exit(1)
