@@ -107,7 +107,6 @@ func Configure() {
 			}
 		}
 
-		// TODO: if we are changing the prefix and zsh abbreviations were enabled, we should move them from old to new now. If shell is fish, we should offer to update the abbr by sourcing --fish-abbr
 	} else {
 		fmt.Print("Enter abbreviation prefix (default 'pal'): ")
 		fmt.Scanln(&prefix)
