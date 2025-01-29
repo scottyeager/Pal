@@ -14,7 +14,7 @@ func NewProvider(providerName string, apiKey string) Provider {
 
 var ProviderTemplates = map[string]Provider{
 	"deepseek": {
-		URL: "https://api.deepseek.ai/v1",
+		URL: "https://api.deepseek.com",
 		Models: []string{
 			"deepseek-chat",
 			"deepseek-reasoner",

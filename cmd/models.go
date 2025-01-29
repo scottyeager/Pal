@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/scottyeager/pal/config"
@@ -10,8 +11,21 @@ import (
 
 func Models(cfg *config.Config) {
 	models := []string{}
-	for provider, providerConfig := range cfg.Providers {
-		for _, model := range providerConfig.Models {
+	providers := make([]string, 0, len(cfg.Providers))
+	for provider := range cfg.Providers {
+		providers = append(providers, provider)
+	}
+	// For now we sort alphabetically. It would probably be best to preserve the
+	// ordering from the config file, but that requires a change to the config
+	// structure or some additional parsing
+	sort.Strings(providers)
+
+	for _, provider := range providers {
+		providerConfig := cfg.Providers[provider]
+		models := make([]string, len(providerConfig.Models))
+		copy(models, providerConfig.Models)
+		sort.Strings(models)
+		for _, model := range models {
 			models = append(models, fmt.Sprintf("%s/%s", provider, model))
 		}
 	}
