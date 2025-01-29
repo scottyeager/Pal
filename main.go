@@ -87,7 +87,6 @@ func main() {
 		}
 
 		commands := strings.Split(string(data), "\n")
-		fmt.Println("Stored commands:")
 		for i, cmd := range commands {
 			if cmd != "" {
 				fmt.Printf("%d: %s\n", i+1, cmd)
