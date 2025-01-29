@@ -12,7 +12,6 @@ type Config struct {
 	ZshAbbreviations   bool                `yaml:"zsh_abbreviations"`
 	AbbreviationPrefix string              `yaml:"abbreviation_prefix"`
 	Providers          map[string]Provider `yaml:"providers"`
-	SelectedProvider   string              `yaml:"selected_provider"`
 	SelectedModel      string              `yaml:"selected_model"`
 }
 

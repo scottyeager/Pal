@@ -19,8 +19,9 @@ type Client struct {
 }
 
 func NewClient(cfg *config.Config) (*Client, error) {
-	provider := cfg.Providers[cfg.SelectedProvider]
-	model := cfg.SelectedModel
+	parts := strings.SplitN(cfg.SelectedModel, "/", 2)
+	provider_name, model := parts[0], parts[1]
+	provider := cfg.Providers[provider_name]
 	client := openai.NewClient(
 		option.WithAPIKey(provider.APIKey),
 		option.WithBaseURL(provider.URL),

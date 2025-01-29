@@ -28,23 +28,26 @@ func Configure() {
 	existingCfg, err := config.LoadConfig()
 	// Check for configured providers
 	providers := make(map[string]config.Provider)
-	if existingCfg != nil && existingCfg.Providers != nil {
-		providers = existingCfg.Providers
-		fmt.Println("Already configured providers:")
-		for name := range existingCfg.Providers {
-			fmt.Println(name)
-		}
-		fmt.Println()
-	}
 
-	// Display available provider templates
+	// Get names of providers with a template
 	templates := make([]string, 0, len(config.ProviderTemplates))
 	for name := range config.ProviderTemplates {
 		templates = append(templates, name)
 	}
 
+	if existingCfg != nil && existingCfg.Providers != nil {
+		providers = existingCfg.Providers
+	}
+
 	for {
-		fmt.Println("\nAvailable provider templates:")
+		if len(providers) > 0 {
+			fmt.Println("\nConfigured providers:")
+			for name := range providers {
+				fmt.Println(name)
+			}
+		}
+
+		fmt.Println("\nAvailable providers:")
 		for i, t := range templates {
 			fmt.Printf("%d. %s\n", i+1, t)
 		}
@@ -87,6 +90,7 @@ func Configure() {
 		providers[selectedProvider] = config.NewProvider(selectedProvider, apiKey)
 	}
 
+	// Try to find the shell name, for zsh specific config
 	ppid := os.Getppid()
 	bytes, err := os.ReadFile("/proc/" + fmt.Sprint(ppid) + "/comm")
 	shell := strings.TrimSpace(string(bytes))
@@ -102,7 +106,9 @@ func Configure() {
 			if err != nil {
 				fmt.Printf("Error reading data from disk: %v\n", err)
 			}
-			if data != "" {
+			// This is the case where we updated the prefix and zsh abbrs were
+			// already enabled, thus we should refresh them
+			if data != "" && existingCfg.ZshAbbreviations {
 				abbr.UpdateZshAbbreviations(existingCfg.AbbreviationPrefix, prefix, data)
 			}
 		}
@@ -139,6 +145,12 @@ func Configure() {
 		Providers:          providers,
 		ZshAbbreviations:   enableZshAbbreviations,
 		AbbreviationPrefix: prefix,
+	}
+
+	// If there's no model configured but there's a provider configured now,
+	// prompt the user to choose a model
+	if (existingCfg == nil || existingCfg.SelectedModel == "") && len(providers) > 0 {
+		Models(cfg)
 	}
 
 	if err := config.SaveConfig(cfg); err != nil {
