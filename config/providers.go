@@ -30,4 +30,14 @@ var ProviderTemplates = map[string]Provider{
 			"deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
 		},
 	},
+	"anthropic": {
+		URL: "https://api.anthropic.com/v1",
+		Models: []string{
+			"claude-3-opus-20240229",
+			"claude-3-sonnet-20240229",
+			"claude-2.1",
+			"claude-2.0",
+			"claude-instant-1.2",
+		},
+	},
 }
