@@ -28,9 +28,10 @@ You will need to provide an API key for an LLM provider.
 Supported providers:
 
 * DeepSeek
+* Anthropic
+* OpenAI
 * Hugging Face Inference API
-* Any OpenAI compatible provider (manual config)
-* Coming soon: Anthropic
+* Any OpenAI API compatible provider (via manual config)
 
 For interactive configuration, run:
 
@@ -122,7 +123,28 @@ The `/models` command is used to select models and also check the currently sele
 pal /models
 ```
 
-For providers added through interactive config, a default set of models will be included. Depending on the provider, additional models may be available that could be added by editing the config file directly.
+For providers added through interactive config, a default set of models will be included. Depending on the provider, additional models may be available that could be added by editing the config file directly. You can also remove models you don't use so they won't show up in model selection list.
+
+## Which models to use?
+
+The command completion function of `pal` works well with the latest generation of flagship models:
+
+* `deepseek-chat` (v3)
+* `claude-3-5-sonnet-latest`
+* `gpt-4o`
+
+It also works fairly well with less expensive "mini" models:
+
+* `claude-3-5-haiku-latest`
+* `gpt-4o-mini`
+
+These might have trouble with some more complex commands though, and the token requirements of command suggestion with `pal` are generally so low that the cost savings might be hard to notice.
+
+If you use the Hugging Face API, then the best choice seems to be `deepseek-ai/DeepSeek-R1-Distill-Qwen-32B` but it can be rather slow.
+
+When it comes to `/ask` mode, the experience will be on par with a regular chat bot conversation. So the flagship models are a good choice and the reasoning models (`o1` and `deepseek-reasoner`) can be handy for more difficult queries.
+
+The reasoning models might be a good choice for especially difficult command suggestion requests too, but so far I didn't find many cases to reach for them.
 
 ## Why?
 
