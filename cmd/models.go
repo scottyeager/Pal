@@ -31,16 +31,21 @@ func Models(cfg *config.Config) {
 		fmt.Printf("%d. %s\n", i+1, model)
 	}
 
-	selectedNumber := "1"
+	selectedNumber := ""
 	if cfg.SelectedModel != "" {
 		fmt.Printf("\nCurrently selected: %s\n", cfg.SelectedModel)
 		fmt.Print("\nEnter model number or press Enter to keep current: ")
+		fmt.Scanln(&selectedNumber)
+		if selectedNumber == "" {
+			fmt.Printf("Model set to: %s\n", cfg.SelectedModel)
+			return
+		}
 	} else {
 		fmt.Print("\nEnter model number or press Enter for default (1): ")
-	}
-	fmt.Scanln(&selectedNumber)
-	if selectedNumber == "" {
-		return
+		fmt.Scanln(&selectedNumber)
+		if selectedNumber == "" {
+			selectedNumber = "1"
+		}
 	}
 
 	var modelIndex int
