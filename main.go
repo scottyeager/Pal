@@ -150,6 +150,26 @@ func main() {
 
 		fmt.Println(response)
 
+	case "/commit":
+		if err := checkConfiguration(cfg); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		aiClient, err := ai.NewClient(cfg)
+		if err != nil {
+			fmt.Printf("Error creating AI client: %v\n", err)
+			os.Exit(1)
+		}
+
+		message, err := cmd.Commit(cfg, aiClient)
+		if err != nil {
+			fmt.Printf("Error generating commit: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Println(message)
+
 	case "--zsh-abbr":
 		// Check for existing temp dir
 		pattern := os.TempDir() + "/pal-zsh-abbr-*"

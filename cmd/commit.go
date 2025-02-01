@@ -47,8 +47,6 @@ func Commit(cfg *config.Config, aiClient *ai.Client) (string, error) {
 	// Get diff
 	diffCmd := exec.Command("git", "diff", "--cached")
 	diffOut, err := diffCmd.Output()
-	fmt.Println("Generating commit message from these diffs:")
-	fmt.Println(string(diffOut))
 	if err != nil {
 		return "", fmt.Errorf("failed to get git diff: %w", err)
 	}
@@ -61,38 +59,39 @@ func Commit(cfg *config.Config, aiClient *ai.Client) (string, error) {
 	}
 
 	// Generate commit message
-	systemPrompt := `You are a helpful assistant that generates git commit messages based on code changes. Use the Conventional Commit style.
-	
-Recent commit history:
-` + string(logOut) + `
- Follow these guidelines:
- - Write a single line under 50 characters
- - Use imperative mood (e.g. "Fix bug" not "Fixed bug")
- - Summarize the diffs at a high level
+	systemPrompt := `You are a helpful assistant who generates concise and complete git commit messages based on code changes in diff format. Use the Conventional Commit style.
 
- Choose one of the following types to begin the message:
+	Follow these guidelines:
+	- Write a single line under 72 characters
+	- Use imperative mood (e.g. "Fix bug" not "Fixed bug")
+	- Review the diffs carfully and summarize them at a high level
+	- Check for context in the previous commit messages
 
- feat: New feature
- fix: Bug fix
- docs: Documentation
- style: Formatting
- refactor: Code restructuring
- ci: Continuous integration
- test: Testing-related
- chore: Build/config/tooling
- perf: Performance improvements
+	Choose one of the following types to begin the message:
 
- Be concise, but not at the expense of completeness. Respond only with a single line containing the commit message. No explanations, additional formatting, or line breaks, please.`
+	feat: New feature
+	fix: Bug fix
+	docs: Documentation
+	style: Formatting
+	refactor: Code restructuring
+	ci: Continuous integration
+	test: Testing-related
+	chore: Build/config/tooling
+	perf: Performance improvements
 
-	message, err := aiClient.GetCompletion(context.Background(), systemPrompt, string(diffOut), false)
+	Respond only with a single line containing the commit message. No explanations, additional formatting, or line breaks, please.`
+
+	prompt := `Recent commit history: ` + string(logOut) + `Diffs for this commit: ` + string(diffOut)
+
+	message, err := aiClient.GetCompletion(context.Background(), systemPrompt, prompt, false)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate commit message: %w", err)
 	}
 
 	// Clean up message
 	message = strings.TrimSpace(message)
-	if len(message) > 50 {
-		message = message[:50]
+	if len(message) > 72 {
+		message = message[:72]
 	}
 
 	// Add comment explaining how to abort
