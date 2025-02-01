@@ -84,6 +84,10 @@ func Commit(cfg *config.Config, aiClient *ai.Client) (string, error) {
 		message = message[:72]
 	}
 
+	// Add comment explaining how to abort
+	message = message + "\n\n# To abort this commit, delete all lines and save the file\n" +
+		"# If you exit without saving, the pregenerated message will be used"
+
 	// Start interactive commit with prefilled message
 	commitCmd := exec.Command("git", "commit", "-m", message, "--edit")
 	commitCmd.Stdin = os.Stdin
