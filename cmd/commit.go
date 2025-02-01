@@ -19,22 +19,25 @@ func Commit(cfg *config.Config, aiClient *ai.Client) (string, error) {
 		return "", fmt.Errorf("failed to get git status: %w", err)
 	}
 
-	// Parse modified files
-	var modifiedFiles []string
+	// Parse modified and staged files
+	var filesToCommit []string
 	lines := strings.Split(string(statusOut), "\n")
 	for _, line := range lines {
-		if len(line) > 3 && line[0] == 'M' && line[1] == ' ' {
-			modifiedFiles = append(modifiedFiles, strings.TrimSpace(line[3:]))
+		if len(line) > 3 {
+			// Check for modified (M), added (A), or renamed (R) files
+			if (line[0] == 'M' || line[0] == 'A' || line[0] == 'R') && line[1] == ' ' {
+				filesToCommit = append(filesToCommit, strings.TrimSpace(line[3:]))
+			}
 		}
 	}
 
-	if len(modifiedFiles) == 0 {
-		return "", fmt.Errorf("no modified files to commit")
+	if len(filesToCommit) == 0 {
+		return "", fmt.Errorf("no changes to commit")
 	}
 
-	// Add modified files
+	// Add any unstaged changes
 	addCmd := exec.Command("git", "add")
-	addCmd.Args = append(addCmd.Args, modifiedFiles...)
+	addCmd.Args = append(addCmd.Args, filesToCommit...)
 	if err := addCmd.Run(); err != nil {
 		return "", fmt.Errorf("failed to add files: %w", err)
 	}
