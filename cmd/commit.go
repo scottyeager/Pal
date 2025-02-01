@@ -53,10 +53,18 @@ func Commit(cfg *config.Config, aiClient *ai.Client) (string, error) {
 		return "", fmt.Errorf("failed to get git diff: %w", err)
 	}
 
-	// - Explain why and how vs what (visible in diff)
-	// - Describe what changed as completely as possible
+	// Get last 10 commits
+	logCmd := exec.Command("git", "log", "-n", "10", "--oneline")
+	logOut, err := logCmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get git log: %w", err)
+	}
+
 	// Generate commit message
 	systemPrompt := `You are a helpful assistant that generates git commit messages based on code changes. Use the Conventional Commit style.
+	
+Recent commit history:
+` + string(logOut) + `
  Follow these guidelines:
  - Write a single line under 50 characters
  - Use imperative mood (e.g. "Fix bug" not "Fixed bug")
