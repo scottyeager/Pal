@@ -25,7 +25,9 @@ func Commit(cfg *config.Config, aiClient *ai.Client) (string, error) {
 	for _, line := range lines {
 		if len(line) > 3 {
 			// Check for modified (M), added (A), or renamed (R) files
-			if (line[0] == 'M' || line[0] == 'A' || line[0] == 'R') && line[1] == ' ' {
+			// Either staged (first column) or unstaged (second column)
+			if (line[0] == 'M' || line[0] == 'A' || line[0] == 'R' || 
+			    line[1] == 'M') {
 				filesToCommit = append(filesToCommit, strings.TrimSpace(line[3:]))
 			}
 		}
