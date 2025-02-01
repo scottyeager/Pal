@@ -55,4 +55,23 @@ var ProviderTemplates = map[string]Provider{
 			"gpt-4-turbo-preview",
 		},
 	},
+	"mistral": {
+		URL: "https://api.mistral.ai/v1/",
+		Models: []string{
+			"codestral-latest",
+			"mistral-large-latest",
+			"open-mistral-nemo",
+			"mistral-small-latest",
+			"open-codestral-mamba",
+		},
+	},
+	"google": {
+		URL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+		Models: []string{
+			"gemini-2.0-flash-exp",
+			"gemini-1.5-flash",
+			"gemini-1.5-flash-8b",
+			"gemini-1.5-pro",
+		},
+	},
 }
