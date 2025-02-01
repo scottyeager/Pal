@@ -47,17 +47,20 @@ func Commit(cfg *config.Config, aiClient *ai.Client) (string, error) {
 	// Get diff
 	diffCmd := exec.Command("git", "diff", "--cached")
 	diffOut, err := diffCmd.Output()
+	fmt.Println("Generating commit message from these diffs:")
+	fmt.Println(string(diffOut))
 	if err != nil {
 		return "", fmt.Errorf("failed to get git diff: %w", err)
 	}
 
 	// - Explain why and how vs what (visible in diff)
+	// - Describe what changed as completely as possible
 	// Generate commit message
 	systemPrompt := `You are a helpful assistant that generates git commit messages based on code changes. Use the Conventional Commit style.
- The message should be:
- - A single line under 50 characters
- - In imperative mood (e.g. "Fix bug" not "Fixed bug")
- - Describe what changed as completely as possible
+ Follow these guidelines:
+ - Write a single line under 50 characters
+ - Use imperative mood (e.g. "Fix bug" not "Fixed bug")
+ - Summarize the diffs at a high level
 
  Choose one of the following types to begin the message:
 
@@ -80,12 +83,12 @@ func Commit(cfg *config.Config, aiClient *ai.Client) (string, error) {
 
 	// Clean up message
 	message = strings.TrimSpace(message)
-	if len(message) > 72 {
-		message = message[:72]
+	if len(message) > 50 {
+		message = message[:50]
 	}
 
 	// Add comment explaining how to abort
-	message = message + "\n\n# To abort this commit, delete all lines and save the file\n" +
+	message = message + "\n\n# To abort this commit, delete the commit message and save the file\n" +
 		"# If you exit without saving, the pregenerated message will be used"
 
 	// Start interactive commit with prefilled message
