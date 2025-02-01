@@ -26,8 +26,8 @@ func Commit(cfg *config.Config, aiClient *ai.Client) (string, error) {
 		if len(line) > 3 {
 			// Check for modified (M), added (A), or renamed (R) files
 			// Either staged (first column) or unstaged (second column)
-			if (line[0] == 'M' || line[0] == 'A' || line[0] == 'R' || 
-			    line[1] == 'M') {
+			if line[0] == 'M' || line[0] == 'A' || line[0] == 'R' ||
+				line[1] == 'M' {
 				filesToCommit = append(filesToCommit, strings.TrimSpace(line[3:]))
 			}
 		}
@@ -51,12 +51,13 @@ func Commit(cfg *config.Config, aiClient *ai.Client) (string, error) {
 		return "", fmt.Errorf("failed to get git diff: %w", err)
 	}
 
+	// - Explain why and how vs what (visible in diff)
 	// Generate commit message
 	systemPrompt := `You are a helpful assistant that generates git commit messages based on code changes. Use the Conventional Commit style.
  The message should be:
  - A single line under 50 characters
  - In imperative mood (e.g. "Fix bug" not "Fixed bug")
- - Explain why and how vs what (visible in diff)
+ - Describe what changed as completely as possible
 
  Choose one of the following types to begin the message:
 
@@ -65,9 +66,12 @@ func Commit(cfg *config.Config, aiClient *ai.Client) (string, error) {
  docs: Documentation
  style: Formatting
  refactor: Code restructuring
+ ci: Continuous integration
  test: Testing-related
  chore: Build/config/tooling
- perf: Performance improvements`
+ perf: Performance improvements
+
+ Be concise, but not at the expense of completeness. Respond only with a single line containing the commit message. No explanations, additional formatting, or line breaks, please.`
 
 	message, err := aiClient.GetCompletion(context.Background(), systemPrompt, string(diffOut), false)
 	if err != nil {
