@@ -48,8 +48,14 @@ func checkConfiguration(cfg *config.Config) error {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: pal <command>")
+	stdinInput, err := readStdin()
+	if err != nil {
+		fmt.Printf("Error reading stdin: %v\n", err)
+		os.Exit(1)
+	}
+
+	if len(os.Args) < 2 && stdinInput == "" {
+		fmt.Println("No input detected.")
 		fmt.Println("Try 'pal /help' for more information")
 		os.Exit(1)
 	}
@@ -59,16 +65,17 @@ func main() {
 		fmt.Printf("Error loading config: %v\n", err)
 		os.Exit(1)
 	}
-	command := os.Args[1]
+
+	var command string
+	if len(os.Args) > 1 {
+		command = os.Args[1]
+	} else {
+		command = ""
+	}
 
 	if !strings.HasPrefix(command, "/") && !strings.HasPrefix(command, "-") {
 		// If no command is specified, treat the entire input as a question
 		var question string
-		stdinInput, err := readStdin()
-		if err != nil {
-			fmt.Printf("Error reading stdin: %v\n", err)
-			os.Exit(1)
-		}
 		if stdinInput != "" && len(os.Args) > 1 {
 			question = stdinInput + "\nThat concludes the stdin contents. Now here's the query from the user:\n" + strings.Join(os.Args[1:], " ")
 		} else if stdinInput != "" {
@@ -143,20 +150,14 @@ func main() {
 		}
 
 	case "/ask":
-		if len(os.Args) < 3 {
-			fmt.Println("Usage: pal /ask <question>")
-			os.Exit(1)
-		}
 		var question string
-		stdinInput, err := readStdin()
-		if err != nil {
-			fmt.Printf("Error reading stdin: %v\n", err)
-			os.Exit(1)
-		}
 		if stdinInput != "" && len(os.Args) > 2 {
-			question = stdinInput + "\n\nAdditional context: " + strings.Join(os.Args[2:], " ")
+			question = stdinInput + "\nThat concludes the stdin contents. Now here's the query from the user:\n" + strings.Join(os.Args[2:], " ")
 		} else if stdinInput != "" {
 			question = stdinInput
+		} else if stdinInput == "" && len(os.Args) < 3 {
+			fmt.Println("Usage: pal /ask <question>")
+			os.Exit(1)
 		} else {
 			question = strings.Join(os.Args[2:], " ")
 		}
