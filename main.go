@@ -32,7 +32,7 @@ func readStdin() (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error reading from stdin: %w", err)
 		}
-		return string(data), nil
+		return "Here is some input from stdin:\n" + string(data), nil
 	}
 	return "", nil
 }
@@ -69,11 +69,10 @@ func main() {
 			fmt.Printf("Error reading stdin: %v\n", err)
 			os.Exit(1)
 		}
-		if stdinInput != "" {
-			question = "Here is some input from stdin:\n" + stdinInput
-			if len(os.Args) > 1 {
-				question += "\n\nAdditional context: " + strings.Join(os.Args[1:], " ")
-			}
+		if stdinInput != "" && len(os.Args) > 1 {
+			question = stdinInput + "\n\nAdditional context: " + strings.Join(os.Args[1:], " ")
+		} else if stdinInput != "" {
+			question = stdinInput
 		} else {
 			question = strings.Join(os.Args[1:], " ")
 		}
@@ -154,11 +153,10 @@ func main() {
 			fmt.Printf("Error reading stdin: %v\n", err)
 			os.Exit(1)
 		}
-		if stdinInput != "" {
-			question = "Here is some input from stdin:\n" + stdinInput
-			if len(os.Args) > 2 {
-				question += "\n\nAdditional context: " + strings.Join(os.Args[2:], " ")
-			}
+		if stdinInput != "" && len(os.Args) > 2 {
+			question = stdinInput + "\n\nAdditional context: " + strings.Join(os.Args[2:], " ")
+		} else if stdinInput != "" {
+			question = stdinInput
 		} else {
 			question = strings.Join(os.Args[2:], " ")
 		}
