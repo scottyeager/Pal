@@ -31,7 +31,9 @@ Supported providers:
 * Anthropic
 * OpenAI
 * Hugging Face Inference API
-* Any OpenAI API compatible provider (via manual config)
+* Mistral
+* Google
+* Any OpenAI API compatible provider, including locally hosted models (via manual config)
 
 For interactive configuration, run:
 
@@ -124,6 +126,22 @@ pal /models
 ```
 
 For providers added through interactive config, a default set of models will be included. Depending on the provider, additional models may be available that could be added by editing the config file directly. You can also remove models you don't use so they won't show up in model selection list.
+
+### Git commit
+
+The `/commit` command is used to stage changes in Git repos and automatically generate commit messages:
+
+```
+pal /commit
+```
+
+It works like this:
+
+1. Any modified files are `git add`ed (new files must be added manually)
+2. Diffs for the current commit and ten previous commit messages for context are sent to the LLM
+3. The suggested commit message is opened for review and editing if needed
+
+It's possible to abort the commit by deleting the message and saving before exiting the editor.
 
 ## Which models to use?
 
