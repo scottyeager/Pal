@@ -32,7 +32,7 @@ func readStdin() (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error reading from stdin: %w", err)
 		}
-		return "Here is some input from stdin:\n" + string(data), nil
+		return "Here is some input from stdin. This might be file contents, error messages, or other command output that the user wanted to include with their query:\n" + string(data), nil
 	}
 	return "", nil
 }
@@ -70,7 +70,7 @@ func main() {
 			os.Exit(1)
 		}
 		if stdinInput != "" && len(os.Args) > 1 {
-			question = stdinInput + "\n\nAdditional context: " + strings.Join(os.Args[1:], " ")
+			question = stdinInput + "\nThat concludes the stdin contents. Now here's the query from the user:\n" + strings.Join(os.Args[1:], " ")
 		} else if stdinInput != "" {
 			question = stdinInput
 		} else {
@@ -205,7 +205,7 @@ func main() {
 			fmt.Printf("Error reading stdin: %v\n", err)
 			os.Exit(1)
 		}
-		
+
 		var message string
 		if stdinInput != "" {
 			// If there's stdin, use it as the commit message
