@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,6 +23,19 @@ var zshJobQueueEmbed string
 
 //go:embed abbr.fish
 var fishAbbrEmbed string
+
+func readStdin() (string, error) {
+	stat, _ := os.Stdin.Stat()
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		// Data is being piped to stdin
+		data, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			return "", fmt.Errorf("error reading from stdin: %w", err)
+		}
+		return string(data), nil
+	}
+	return "", nil
+}
 
 func checkConfiguration(cfg *config.Config) error {
 	if len(cfg.Providers) == 0 {
@@ -49,7 +63,20 @@ func main() {
 
 	if !strings.HasPrefix(command, "/") && !strings.HasPrefix(command, "-") {
 		// If no command is specified, treat the entire input as a question
-		question := strings.Join(os.Args[1:], " ")
+		var question string
+		stdinInput, err := readStdin()
+		if err != nil {
+			fmt.Printf("Error reading stdin: %v\n", err)
+			os.Exit(1)
+		}
+		if stdinInput != "" {
+			question = "Here is some input from stdin:\n" + stdinInput
+			if len(os.Args) > 1 {
+				question += "\n\nAdditional context: " + strings.Join(os.Args[1:], " ")
+			}
+		} else {
+			question = strings.Join(os.Args[1:], " ")
+		}
 
 		if err := checkConfiguration(cfg); err != nil {
 			fmt.Println(err)
@@ -121,7 +148,20 @@ func main() {
 			fmt.Println("Usage: pal /ask <question>")
 			os.Exit(1)
 		}
-		question := strings.Join(os.Args[2:], " ")
+		var question string
+		stdinInput, err := readStdin()
+		if err != nil {
+			fmt.Printf("Error reading stdin: %v\n", err)
+			os.Exit(1)
+		}
+		if stdinInput != "" {
+			question = "Here is some input from stdin:\n" + stdinInput
+			if len(os.Args) > 2 {
+				question += "\n\nAdditional context: " + strings.Join(os.Args[2:], " ")
+			}
+		} else {
+			question = strings.Join(os.Args[2:], " ")
+		}
 
 		cfg, err := config.LoadConfig()
 		if err != nil {
@@ -162,7 +202,20 @@ func main() {
 			os.Exit(1)
 		}
 
-		message, err := cmd.Commit(cfg, aiClient)
+		stdinInput, err := readStdin()
+		if err != nil {
+			fmt.Printf("Error reading stdin: %v\n", err)
+			os.Exit(1)
+		}
+		
+		var message string
+		if stdinInput != "" {
+			// If there's stdin, use it as the commit message
+			message = stdinInput
+		} else {
+			// Otherwise generate a commit message
+			message, err = cmd.Commit(cfg, aiClient)
+		}
 		if err != nil {
 			fmt.Printf("Error generating commit: %v\n", err)
 			os.Exit(1)
