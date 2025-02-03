@@ -81,7 +81,7 @@ Abbreviations for `zsh` must also be enabled in the `pal` config. You can run `p
 
 The basic usage pattern is to write `pal` and then describe or ask about the command you need:
 
-```
+```text
 pal Set a static IP for eth0
 ```
 
@@ -115,6 +115,39 @@ If necessary, you can pass special characters to `pal` by quoting them:
 
 ```sh
 pal /ask what does this do: 'ls *.log'
+```
+
+### Stdin
+
+Anything passed to `pal` on `stdin` will be included with the prompt. That means you can do this:
+
+```sh
+cat README.md | pal /ask please summarize
+```
+
+Of course, that could also be written like this:
+
+```sh
+pal /ask please summarize $(cat README.md)
+```
+
+By redirecting `stderr`, error messages can be sent to `pal`:
+
+```sh
+apt install ping
+# There's no package named "ping" so this is an error
+
+# Zsh and Bash
+apt install ping |& pal
+
+# Fish
+apt install ping &| pal
+```
+
+In this case, the error message is enough for the model to suggest the correct install command. You can also provide additional instructions or context as usual:
+
+```sh
+docker ps | pal how can I print the first four characters of the container ids only
 ```
 
 ### Model selection
