@@ -149,8 +149,12 @@ func Configure() {
 
 	// If there's no model configured but there's a provider configured now,
 	// prompt the user to choose a model
-	if (existingCfg == nil || existingCfg.SelectedModel == "") && len(providers) > 0 {
-		Models(cfg)
+	if len(providers) > 0 {
+		if existingCfg != nil && existingCfg.SelectedModel != "" {
+			cfg.SelectedModel = existingCfg.SelectedModel
+		} else if existingCfg.SelectedModel == "" {
+			Models(cfg)
+		}
 	}
 
 	if err := config.SaveConfig(cfg); err != nil {
