@@ -23,16 +23,18 @@ If the command name `pal` is already taken on your system, feel free to give it 
 
 ### Config
 
-You will need to provide an API key for an LLM provider.
+You will need to provide an API key for an LLM provider. Several providers listed below have a free tier.
+
+The free tiers sometimes require that you agree to collection and use of the data you submit. Those providers also have paid plans without the data collection requirement. See the links for details.
 
 Supported providers:
 
-* DeepSeek
-* Anthropic
-* OpenAI
-* Hugging Face Inference API
-* Mistral
-* Google
+* [DeepSeek](https://platform.deepseek.com/)
+* [Anthropic](https://console.anthropic.com/)
+* [OpenAI](https://platform.openai.com/)
+* [Hugging Face Inference API](https://huggingface.co/docs/api-inference/getting-started) (free with [no data collection](https://huggingface.co/docs/api-inference/security), but slow)
+* [Mistral](https://console.mistral.ai/) (free with [data collection](https://mistral.ai/terms/#our-free-services))
+* [Google](https://ai.google.dev/) (free with [data collection](https://ai.google.dev/gemini-api/terms#unpaid-services))
 * Any OpenAI API compatible provider, including locally hosted models (via manual config)
 
 For interactive configuration, run:
