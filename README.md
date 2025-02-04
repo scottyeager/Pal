@@ -35,7 +35,8 @@ Supported providers:
 * [Hugging Face Inference API](https://huggingface.co/docs/api-inference/getting-started) (free with [no data collection](https://huggingface.co/docs/api-inference/security), but slow)
 * [Mistral](https://console.mistral.ai/) (free with [data collection](https://mistral.ai/terms/#our-free-services))
 * [Google](https://ai.google.dev/) (free with [data collection](https://ai.google.dev/gemini-api/terms#unpaid-services))
-* Any OpenAI API compatible provider, including locally hosted models (via manual config)
+* [OpenWebUI](openwebui.com) (self hosted models via Ollama, see [guide](https://github.com/scottyeager/Pal/blob/main/docs/openwebui.md))
+* Any OpenAI API compatible provider (via manual config)
 
 For interactive configuration, run:
 
