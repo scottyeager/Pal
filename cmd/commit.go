@@ -118,8 +118,11 @@ var commitCmd = &cobra.Command{
 		prompt := `Recent commit history: ` + string(logOut) + `Diffs for this commit: ` + string(diffOut)
 
 		// Might be interesting to see if lower temp gives better commit msgs
-		temperature := 0.5
-		message, err := aiClient.GetCompletion(context.Background(), systemPrompt, prompt, false, temperature)
+		t := 0.5
+		if temperature != -1.0 {
+			t = temperature
+		}
+		message, err := aiClient.GetCompletion(context.Background(), systemPrompt, prompt, false, t)
 		if err != nil {
 			return fmt.Errorf("failed to generate commit message: %w", err)
 		}
