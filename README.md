@@ -213,6 +213,19 @@ It works like this:
 
 It's possible to abort the commit by deleting the message and saving before exiting the editor.
 
+
+### Temperature
+
+In the context of LLMs, *temperature* refers to the amount of randomness introduced when generating responses. With temperature of 0, responses are deterministic. With temperature of 2, you are working with an artist.
+
+By default, `pal` uses a hopefully sensible hard coded temperature for the task at hand. You can override the temperature for any command that interacts with the AI backend like this:
+
+```
+pal -t 2 /ask write a poem
+
+pal --temperature 0 /commit
+```
+
 ## Which models to use?
 
 The command completion function of `pal` works well with the latest generation of flagship models:

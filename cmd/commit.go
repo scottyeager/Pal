@@ -117,10 +117,13 @@ var commitCmd = &cobra.Command{
 
 		prompt := `Recent commit history: ` + string(logOut) + `Diffs for this commit: ` + string(diffOut)
 
-		t := 0.5
+		// Higher temperatures seem to maybe create better commit messages
+		// Who knew these were more like poetry than code? :P
+		t := 1.5
 		if cmd.Flags().Changed("temperature") {
 			t = temperature
 		}
+
 		message, err := aiClient.GetCompletion(context.Background(), systemPrompt, prompt, false, t)
 		if err != nil {
 			return fmt.Errorf("failed to generate commit message: %w", err)

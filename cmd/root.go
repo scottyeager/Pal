@@ -26,7 +26,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&zshAbbr, "zsh-abbr", false, "Print zsh abbreviation script and exit. Output is meant to be sourced by zsh.")
 	rootCmd.Flags().BoolVar(&fishCompletion, "fish-completion", false, "Print fish autocompletion script and exit. Output is meant to be sourced by fish.")
 	rootCmd.Flags().BoolVar(&zshCompletion, "zsh-completion", false, "Print zsh autocompletion script and exit. Output is meant to be sourced by zsh.")
-	rootCmd.PersistentFlags().Float64VarP(&temperature, "temperature", "t", 0, "Set the temperature for the AI model (higher values make output more random)")
+	rootCmd.PersistentFlags().Float64VarP(&temperature, "temperature", "t", 0, "Set the temperature for the AI model, between 0 and 2 (higher values make output more random)")
 
 	// Disable help command. --help still works
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
@@ -38,10 +38,16 @@ var rootCmd = &cobra.Command{
 	Long: `pal is a command-line tool that suggests shell commands based on your input.
 It uses AI to generate commands and can also manage shell abbreviations.`,
 	CompletionOptions: cobra.CompletionOptions{
-		// DisableDefaultCmd: true,
+		DisableDefaultCmd: true,
 	},
-	// SilenceErrors: true,
 	Args: cobra.ArbitraryArgs,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		if temperature < 0 || temperature > 2 {
+			return fmt.Errorf("Temperature must be between 0 and 2")
+		} else {
+			return nil
+		}
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		stdinInput, err := io.ReadStdin()
 		if err != nil {
