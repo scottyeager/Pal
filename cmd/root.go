@@ -26,7 +26,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&zshAbbr, "zsh-abbr", false, "Print zsh abbreviation script and exit. Output is meant to be sourced by zsh.")
 	rootCmd.Flags().BoolVar(&fishCompletion, "fish-completion", false, "Print fish autocompletion script and exit. Output is meant to be sourced by fish.")
 	rootCmd.Flags().BoolVar(&zshCompletion, "zsh-completion", false, "Print zsh autocompletion script and exit. Output is meant to be sourced by zsh.")
-	rootCmd.PersistentFlags().Float64VarP(&temperature, "temperature", "t", -1.0, "Set the temperature for the AI model (higher values make output more random)")
+	rootCmd.PersistentFlags().Float64VarP(&temperature, "temperature", "t", 0, "Set the temperature for the AI model (higher values make output more random)")
 
 	// Disable help command. --help still works
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
@@ -120,7 +120,7 @@ It uses AI to generate commands and can also manage shell abbreviations.`,
 		system_prompt := "You are a helpful assistant that suggests shell commands. Each command is a single line that can run in the shell. Respond with three command options, one per line. Don't add anything extra, no context, no explanations, no formatting, no code blocks."
 
 		t := 0.0
-		if temperature != -1.0 {
+		if cmd.PersistentFlags().Changed("temperature") {
 			t = temperature
 		}
 		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, true, t)
