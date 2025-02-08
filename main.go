@@ -95,13 +95,15 @@ func main() {
 			os.Exit(1)
 		}
 
-		system_prompt := "You are a helpful assistant that suggests shell commands. Each command is a single line that can run in the shell. Respond three command options, one per line. Don't add anything extra, no context, no explanations, no formatting."
+		system_prompt := "You are a helpful assistant that suggests shell commands. Each command is a single line that can run in the shell. Respond with three command options, one per line. Don't add anything extra, no context, no explanations, no formatting, no code blocks."
 
-		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, true)
+		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, true, 0)
 		if err != nil {
 			fmt.Printf("Error getting completion: %v\n", err)
 			os.Exit(1)
 		}
+		// Remove any blank lines (weaker models tend to return them)
+		response = strings.Join(strings.Fields(response), "\n")
 
 		if cfg.ZshAbbreviations {
 			prefix := cfg.AbbreviationPrefix
@@ -181,7 +183,7 @@ func main() {
 
 		system_prompt := "You are a helpful assistant that runs in the users shell but can answer on any topic. Keep responses concise and avoid using Markdown formatting that won't render in a shell. Lists and bullets are fine, but avoid headings, bold, and italic text."
 
-		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, false)
+		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, false, 1.0)
 		if err != nil {
 			fmt.Printf("Error getting completion: %v\n", err)
 			os.Exit(1)

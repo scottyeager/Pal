@@ -15,11 +15,11 @@ import (
 )
 
 type Client struct {
-	openaiClient   *openai.Client
+	openaiClient    *openai.Client
 	anthropicClient *anthropic.Client
-	provider       config.Provider
-	model          string
-	providerName   string
+	provider        config.Provider
+	model           string
+	providerName    string
 }
 
 func NewClient(cfg *config.Config) (*Client, error) {
@@ -44,11 +44,11 @@ func NewClient(cfg *config.Config) (*Client, error) {
 	}
 
 	return &Client{
-		openaiClient:   openaiClient,
+		openaiClient:    openaiClient,
 		anthropicClient: anthropicClient,
-		provider:       provider,
-		model:          model,
-		providerName:   providerName,
+		provider:        provider,
+		model:           model,
+		providerName:    providerName,
 	}, nil
 }
 
@@ -104,7 +104,7 @@ func StoreCompletion(completion string) error {
 	return nil
 }
 
-func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt string, storeCompletion bool) (string, error) {
+func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt string, storeCompletion bool, temperature float64) (string, error) {
 	var completion string
 	var err error
 
@@ -112,17 +112,18 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 		message, err := c.anthropicClient.Messages.New(ctx, anthropic.MessageNewParams{
 			Model:     anthropic.F(c.model),
 			MaxTokens: anthropic.F(int64(1024)),
-			System:    anthropic.F([]anthropic.TextBlockParam{
+			System: anthropic.F([]anthropic.TextBlockParam{
 				anthropic.NewTextBlock(system_prompt),
 			}),
 			Messages: anthropic.F([]anthropic.MessageParam{
 				anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
 			}),
+			Temperature: anthropic.F(temperature),
 		})
 		if err != nil {
 			return "", fmt.Errorf("failed to get completion: %w", err)
 		}
-		
+
 		// Extract text content from message
 		for _, block := range message.Content {
 			if textBlock, ok := block.AsUnion().(anthropic.TextBlock); ok {
@@ -135,7 +136,8 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 				openai.SystemMessage(system_prompt),
 				openai.UserMessage(prompt),
 			}),
-			Model: openai.F(c.model),
+			Model:       openai.F(c.model),
+			Temperature: openai.F(temperature),
 		})
 		if err != nil {
 			return "", fmt.Errorf("failed to get completion: %w", err)

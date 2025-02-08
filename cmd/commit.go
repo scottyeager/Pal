@@ -83,7 +83,9 @@ func Commit(cfg *config.Config, aiClient *ai.Client) (string, error) {
 
 	prompt := `Recent commit history: ` + string(logOut) + `Diffs for this commit: ` + string(diffOut)
 
-	message, err := aiClient.GetCompletion(context.Background(), systemPrompt, prompt, false)
+	// Might be interesting to see if lower temp gives better commit msgs
+	temperature := 0.5
+	message, err := aiClient.GetCompletion(context.Background(), systemPrompt, prompt, false, temperature)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate commit message: %w", err)
 	}
