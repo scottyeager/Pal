@@ -47,28 +47,35 @@ var commitCmd = &cobra.Command{
 		}
 
 		// Parse modified and staged files
-		var filesToCommit []string
 		lines := strings.Split(string(statusOut), "\n")
+		hasChanges := false
+		for _, line := range lines {
+			if len(line) > 0 && line[:2] != "??" {
+				hasChanges = true
+			}
+		}
+
+		if !hasChanges {
+			return fmt.Errorf("no changes to commit")
+		}
+
+		var filesToCommit []string
 		for _, line := range lines {
 			if len(line) > 3 {
-				// Check for modified (M), added (A), or renamed (R) files
-				// Either staged (first column) or unstaged (second column)
-				if line[0] == 'M' || line[0] == 'A' || line[0] == 'R' ||
-					line[1] == 'M' {
+				// Check for modified (M), unstaged files (second column)
+				if line[1] == 'M' {
 					filesToCommit = append(filesToCommit, strings.TrimSpace(line[3:]))
 				}
 			}
 		}
 
-		if len(filesToCommit) == 0 {
-			return fmt.Errorf("no changes to commit")
-		}
-
 		// Add any unstaged changes
-		addCmd := exec.Command("git", "add")
-		addCmd.Args = append(addCmd.Args, filesToCommit...)
-		if err := addCmd.Run(); err != nil {
-			return fmt.Errorf("failed to add files: %w", err)
+		if len(filesToCommit) > 0 {
+			addCmd := exec.Command("git", "add")
+			addCmd.Args = append(addCmd.Args, filesToCommit...)
+			if err := addCmd.Run(); err != nil {
+				return fmt.Errorf("failed to add files: %w", err)
+			}
 		}
 
 		// Get diff
@@ -132,9 +139,14 @@ var commitCmd = &cobra.Command{
 		commitCmd.Stdin = os.Stdin
 		commitCmd.Stdout = os.Stdout
 		commitCmd.Stderr = os.Stderr
-		if err := commitCmd.Run(); err != nil {
-			return fmt.Errorf("commit failed: %w", err)
-		}
+		commitCmd.Run()
+
+		// If the user aborts the commit, it will cause an error. Maybe we want
+		// to detect this and respond differently. Maybe it doesn't matter
+		// though since if git errors it will print its own error
+		// if err := commitCmd.Run(); err != nil {
+		// 	return fmt.Errorf("commit failed: %w", err)
+		// }
 
 		return nil
 	},
