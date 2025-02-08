@@ -118,7 +118,7 @@ var commitCmd = &cobra.Command{
 		prompt := `Recent commit history: ` + string(logOut) + `Diffs for this commit: ` + string(diffOut)
 
 		t := 0.5
-		if cmd.PersistentFlags().Changed("temperature") {
+		if cmd.Flags().Changed("temperature") {
 			t = temperature
 		}
 		message, err := aiClient.GetCompletion(context.Background(), systemPrompt, prompt, false, t)

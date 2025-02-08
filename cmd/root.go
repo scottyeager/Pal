@@ -120,7 +120,7 @@ It uses AI to generate commands and can also manage shell abbreviations.`,
 		system_prompt := "You are a helpful assistant that suggests shell commands. Each command is a single line that can run in the shell. Respond with three command options, one per line. Don't add anything extra, no context, no explanations, no formatting, no code blocks."
 
 		t := 0.0
-		if cmd.PersistentFlags().Changed("temperature") {
+		if cmd.Flags().Changed("temperature") {
 			t = temperature
 		}
 		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, true, t)

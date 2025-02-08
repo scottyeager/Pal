@@ -49,7 +49,7 @@ var askCmd = &cobra.Command{
 		system_prompt := "You are a helpful assistant that runs in the users shell but can answer on any topic. Keep responses concise and avoid using Markdown formatting that won't render in a shell. Lists and bullets are fine, but avoid headings, bold, and italic text."
 
 		t := 1.0
-		if cmd.PersistentFlags().Changed("temperature") {
+		if cmd.Flags().Changed("temperature") {
 			t = temperature
 		}
 		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, false, t)
