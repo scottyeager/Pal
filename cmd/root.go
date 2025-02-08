@@ -13,12 +13,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var fish bool
 var fishAbbr bool
 var zshAbbr bool
+var fishCompletion bool
+var zshCompletion bool
 
 func init() {
+	rootCmd.Flags().BoolVar(&fish, "fish", false, "Print fish abbreviation script and completion script, then exit. Output is meant to be sourced by fish.")
 	rootCmd.Flags().BoolVar(&zshAbbr, "fish-abbr", false, "Print fish abbreviation script and exit. Output is meant to be sourced by fish.")
 	rootCmd.Flags().BoolVar(&zshAbbr, "zsh-abbr", false, "Print zsh abbreviation script and exit. Output is meant to be sourced by zsh.")
+	rootCmd.Flags().BoolVar(&fishCompletion, "fish-completion", false, "Print fish autocompletion script and exit. Output is meant to be sourced by fish.")
+	rootCmd.Flags().BoolVar(&zshCompletion, "zsh-completion", false, "Print zsh autocompletion script and exit. Output is meant to be sourced by zsh.")
 
 	// Disable help command. --help still works
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
@@ -30,7 +36,7 @@ var rootCmd = &cobra.Command{
 	Long: `pal is a command-line tool that suggests shell commands based on your input.
 It uses AI to generate commands and can also manage shell abbreviations.`,
 	CompletionOptions: cobra.CompletionOptions{
-		DisableDefaultCmd: true,
+		// DisableDefaultCmd: true,
 	},
 	// SilenceErrors: true,
 	Args: cobra.ArbitraryArgs,
@@ -40,10 +46,19 @@ It uses AI to generate commands and can also manage shell abbreviations.`,
 			return fmt.Errorf("error reading stdin: %v", err)
 		}
 
-		if len(args) < 1 && stdinInput == "" && !fishAbbr && !zshAbbr {
+		flagsSet := 0
+		for _, flag := range []bool{fish, fishAbbr, zshAbbr, fishCompletion, zshCompletion} {
+			if flag {
+				flagsSet++
+			}
+		}
+
+		if len(args) < 1 && stdinInput == "" && flagsSet == 0 {
 			return fmt.Errorf("No input or commands detected")
 		} else if len(args) > 0 && strings.HasPrefix(args[0], "/") {
 			return fmt.Errorf("Invalid command.")
+		} else if flagsSet > 1 {
+			return fmt.Errorf("Only one flag to print shell feature scripts can be used at once. To enable both completions and abbreviations in one shot for fish, use --fish.")
 		}
 
 		cfg, err := config.LoadConfig()
@@ -53,11 +68,15 @@ It uses AI to generate commands and can also manage shell abbreviations.`,
 
 		// Since we want to have these "commands" use a double dash, they have
 		// to be flags on the root command to work with cobra, I think
-		if fishAbbr && zshAbbr {
-			return fmt.Errorf("Only one of --fish-abbr and --zsh-abbr can be used at once")
+		if fish {
+			fmt.Println(abbr.GetFishAbbrScript(cfg.AbbreviationPrefix))
+			cmd.GenFishCompletion(os.Stdout, true)
+			return nil
 		} else if fishAbbr {
-			fmt.Println(`set -l pal_prefix "` + cfg.AbbreviationPrefix + `"`)
-			fmt.Print(abbr.FishAbbrEmbed)
+			fmt.Println(abbr.GetFishAbbrScript(cfg.AbbreviationPrefix))
+			return nil
+		} else if fishCompletion {
+			cmd.GenFishCompletion(os.Stdout, true)
 			return nil
 		} else if zshAbbr {
 			path, err := abbr.InstallZshAbbr()
@@ -67,6 +86,15 @@ It uses AI to generate commands and can also manage shell abbreviations.`,
 				fmt.Println(path)
 				return nil
 			}
+		} else if zshCompletion {
+			cmd.GenZshCompletionNoDesc(os.Stdout)
+			return nil
+		}
+		// Just to be sure we don't move on if any of these flags are set.
+		// Since users will be sourcing the output of these commands and we
+		// don't want AI output getting executed!
+		if flagsSet > 0 {
+			return nil
 		}
 
 		var question string

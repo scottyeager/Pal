@@ -60,7 +60,13 @@ Both `fish` and `zsh` are supported for abbreviations.
 
 #### fish
 
-To activate abbreviations for `fish` add the following to your `~/.config/fish/config.fish`:
+The fastest way to enable both abbreviations and autocompletions on `fish` is like this:
+
+```
+echo pal --fish | source >> ~/.config/fish/config.fish
+```
+
+To activate just abbreviations add the following to your `~/.config/fish/config.fish`:
 
 ```sh
 pal --fish-abbr | source
@@ -81,6 +87,32 @@ source $(pal --zsh-abbr)
 Abbreviations for `zsh` must also be enabled in the `pal` config. You can run `pal /config` again or edit `~/.config/pal_helper/config.yaml` if you didn't enable them initially.
 
 > Note: I'm a `fish` user, and I added `zsh` support after a bit of research into how to provide a similar experience. If you have ideas for how to make the `zsh` integration better or how to add support for your favorite shell, please open an issue on this repo and let me know. Thanks!
+
+
+### Autocompletion
+
+Since `pal` is built with [Cobra](https://github.com/spf13/cobra), it's able to generate autocompletions for a variety of shells automatically. Currently only the `fish` and `zsh` completions are exposed.
+
+#### Fish
+
+To activate autocompletions add the following to your `~/.config/fish/config.fish`:
+
+```sh
+pal --fish-abbr | source
+```
+
+#### Zsh
+
+In your `~/.zshrc`:
+
+```sh
+# Make sure these lines are already present somewhere
+autoload -Uz compinit
+compinit
+
+# Add this line to load pal's completions
+source <(pal --zsh-completion)
+```
 
 ## Usage
 
