@@ -2,7 +2,7 @@
 
 `pal` is an AI assistant for terminals. The philosophy here is to feel like a classic shell utility with a bit of magic.
 
-![demo3](https://github.com/user-attachments/assets/c8a9356d-0bb9-43f3-9003-de8b71329674)
+![demo3 1](https://github.com/user-attachments/assets/e6f4be6e-788e-453e-9f27-2b61b76755aa)
 
 For now, `fish` and `zsh` are fully supported and testing is done on Linux only. MacOS might just work too.
 
