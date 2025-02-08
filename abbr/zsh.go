@@ -1,12 +1,55 @@
 package abbr
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 )
+
+//go:embed zsh-abbr/zsh-abbr.zsh
+var ZshAbbrEmbed string
+
+//go:embed zsh-abbr/zsh-job-queue/zsh-job-queue.zsh
+var ZshJobQueueEmbed string
+
+func InstallZshAbbr() (string, error) {
+	// Check for existing temp dir
+	pattern := os.TempDir() + "/pal-zsh-abbr-*"
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		return "", fmt.Errorf("error checking for existing temp dir: %w", err)
+	}
+
+	var tmpDir string
+	if len(matches) > 0 {
+		tmpDir = matches[0]
+	} else {
+		tmpDir, err = os.MkdirTemp("", "pal-zsh-abbr-")
+		if err != nil {
+			return "", fmt.Errorf("error creating temp dir: %w", err)
+		}
+
+		err = os.MkdirAll(tmpDir+"/zsh-job-queue", 0755)
+		if err != nil {
+			return "", fmt.Errorf("error creating job queue dir: %w", err)
+		}
+
+		err = os.WriteFile(tmpDir+"/zsh-job-queue/zsh-job-queue.zsh", []byte(ZshJobQueueEmbed), 0755)
+		if err != nil {
+			return "", fmt.Errorf("error writing job queue file: %w", err)
+		}
+
+		err = os.WriteFile(tmpDir+"/zsh-abbr.zsh", []byte(ZshAbbrEmbed), 0755)
+		if err != nil {
+			return "", fmt.Errorf("error writing abbr file: %w", err)
+		}
+	}
+
+	return tmpDir + "/zsh-abbr.zsh", nil
+}
 
 func UpdateZshAbbreviations(removePrefix string, addPrefix string, commands string) error {
 	abbrFile := os.Getenv("ABBR_USER_ABBREVIATIONS_FILE")
@@ -40,7 +83,7 @@ func UpdateZshAbbreviations(removePrefix string, addPrefix string, commands stri
 	commandLines := strings.Split(commands, "\n")
 	for i, line := range commandLines {
 		if line != "" {
-			abbr := fmt.Sprintf(`abbr %s%d='%s'`, addPrefix, i+1, strings.ReplaceAll(line, "'", "'\\''"))
+			abbr := fmt.Sprintf(`abbr %s%d="%s"`, addPrefix, i+1, line)
 			newLines = append(newLines, abbr)
 		}
 	}

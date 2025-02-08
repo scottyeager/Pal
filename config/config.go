@@ -68,3 +68,13 @@ func SaveConfig(cfg *Config) error {
 
 	return nil
 }
+
+func CheckConfiguration(cfg *Config) error {
+	if len(cfg.Providers) == 0 {
+		return fmt.Errorf("No providers configured. Run 'pal /config' to set up a provider")
+	}
+	if cfg.SelectedModel == "" {
+		return fmt.Errorf("No model selected. Run 'pal /models' to select a model")
+	}
+	return nil
+}

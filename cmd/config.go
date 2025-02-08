@@ -9,158 +9,168 @@ import (
 	"github.com/scottyeager/pal/abbr"
 	"github.com/scottyeager/pal/ai"
 	"github.com/scottyeager/pal/config"
+	"github.com/spf13/cobra"
 )
 
-func Configure() {
-	cfgPath, err := config.GetConfigPath()
-	if err != nil {
-		fmt.Printf("Error getting config path: %v\n", err)
-		return
-	}
+func init() {
+	rootCmd.AddCommand(configCmd)
+}
 
-	// Create config directory if it doesn't exist
-	configDir := filepath.Dir(cfgPath)
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		fmt.Printf("Error creating config directory: %v\n", err)
-		return
-	}
+var configCmd = &cobra.Command{
+	Use:   "/config",
+	Short: "Configure pal",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfgPath, err := config.GetConfigPath()
+		if err != nil {
+			return fmt.Errorf("error getting config path: %v", err)
+		}
 
-	existingCfg, err := config.LoadConfig()
-	// Check for configured providers
-	providers := make(map[string]config.Provider)
+		// Create config directory if it doesn't exist
+		configDir := filepath.Dir(cfgPath)
+		if err := os.MkdirAll(configDir, 0755); err != nil {
+			return fmt.Errorf("error creating config directory: %v", err)
+		}
 
-	// Get names of providers with a template
-	templates := make([]string, 0, len(config.ProviderTemplates))
-	for name := range config.ProviderTemplates {
-		templates = append(templates, name)
-	}
+		existingCfg, err := config.LoadConfig()
+		// Check for configured providers
+		providers := make(map[string]config.Provider)
 
-	if existingCfg != nil && existingCfg.Providers != nil {
-		providers = existingCfg.Providers
-	}
+		// Get names of providers with a template
+		templates := make([]string, 0, len(config.ProviderTemplates))
+		for name := range config.ProviderTemplates {
+			templates = append(templates, name)
+		}
 
-	for {
-		if len(providers) > 0 {
-			fmt.Println("\nConfigured providers:")
-			for name := range providers {
-				fmt.Println(name)
+		if existingCfg != nil && existingCfg.Providers != nil {
+			providers = existingCfg.Providers
+		}
+
+		for {
+			if len(providers) > 0 {
+				fmt.Println("\nConfigured providers:")
+				for name := range providers {
+					fmt.Println(name)
+				}
 			}
-		}
 
-		fmt.Println("\nAvailable providers:")
-		for i, t := range templates {
-			fmt.Printf("%d. %s\n", i+1, t)
-		}
-		fmt.Printf("\nPress enter when done, or select provider (1-%d): ", len(templates))
+			fmt.Println("\nAvailable providers:")
+			for i, t := range templates {
+				fmt.Printf("%d. %s\n", i+1, t)
+			}
+			fmt.Printf("\nPress enter when done, or select provider (1-%d): ", len(templates))
 
-		var input string
-		fmt.Scanln(&input)
-		if input == "" {
-			break
-		}
+			var input string
+			fmt.Scanln(&input)
+			if input == "" {
+				break
+			}
 
-		var choice int
-		fmt.Sscanf(input, "%d", &choice)
-		if choice < 1 || choice > len(templates) {
-			fmt.Println("Invalid choice. Please try again.")
-			continue
-		}
+			var choice int
+			fmt.Sscanf(input, "%d", &choice)
+			if choice < 1 || choice > len(templates) {
+				fmt.Println("Invalid choice. Please try again.")
+				continue
+			}
 
-		selectedProvider := templates[choice-1]
+			selectedProvider := templates[choice-1]
 
-		// Prompt for API key
-		var apiKey string
-		if err == nil && existingCfg != nil && existingCfg.Providers != nil {
-			provider, exists := existingCfg.Providers[selectedProvider]
-			if exists && provider.APIKey != "" {
-				fmt.Printf("Found existing API key for %s. Press enter to keep it, or enter a new one: ", selectedProvider)
-				fmt.Scanln(&apiKey)
-				if apiKey == "" {
-					apiKey = provider.APIKey
+			// Prompt for API key
+			var apiKey string
+			if err == nil && existingCfg != nil && existingCfg.Providers != nil {
+				provider, exists := existingCfg.Providers[selectedProvider]
+				if exists && provider.APIKey != "" {
+					fmt.Printf("Found existing API key for %s. Press enter to keep it, or enter a new one: ", selectedProvider)
+					fmt.Scanln(&apiKey)
+					if apiKey == "" {
+						apiKey = provider.APIKey
+					}
+				} else {
+					fmt.Printf("Enter your %s API key: ", selectedProvider)
+					fmt.Scanln(&apiKey)
 				}
 			} else {
 				fmt.Printf("Enter your %s API key: ", selectedProvider)
 				fmt.Scanln(&apiKey)
 			}
-		} else {
-			fmt.Printf("Enter your %s API key: ", selectedProvider)
-			fmt.Scanln(&apiKey)
+
+			providers[selectedProvider] = config.NewProvider(selectedProvider, apiKey)
 		}
 
-		providers[selectedProvider] = config.NewProvider(selectedProvider, apiKey)
-	}
+		// Try to find the shell name, for zsh specific config
+		ppid := os.Getppid()
+		bytes, err := os.ReadFile("/proc/" + fmt.Sprint(ppid) + "/comm")
+		shell := strings.TrimSpace(string(bytes))
 
-	// Try to find the shell name, for zsh specific config
-	ppid := os.Getppid()
-	bytes, err := os.ReadFile("/proc/" + fmt.Sprint(ppid) + "/comm")
-	shell := strings.TrimSpace(string(bytes))
-
-	var prefix string
-	if existingCfg != nil && existingCfg.AbbreviationPrefix != "" {
-		fmt.Printf("Current abbreviation prefix is '%s'. Press enter to keep it, or enter a new one: ", existingCfg.AbbreviationPrefix)
-		fmt.Scanln(&prefix)
-		if prefix == "" {
-			prefix = existingCfg.AbbreviationPrefix
-		} else {
-			data, err := ai.GetStoredCompletion()
-			if err != nil {
-				fmt.Printf("Error reading data from disk: %v\n", err)
+		var prefix string
+		if existingCfg != nil && existingCfg.AbbreviationPrefix != "" {
+			fmt.Printf("Current abbreviation prefix is '%s'. Press enter to keep it, or enter a new one: ", existingCfg.AbbreviationPrefix)
+			fmt.Scanln(&prefix)
+			if prefix == "" {
+				prefix = existingCfg.AbbreviationPrefix
+			} else {
+				data, err := ai.GetStoredCompletion()
+				if err != nil {
+					fmt.Printf("Error reading data from disk: %v\n", err)
+				}
+				// This is the case where we updated the prefix and zsh abbrs were
+				// already enabled, thus we should refresh them
+				if data != "" && existingCfg.ZshAbbreviations {
+					abbr.UpdateZshAbbreviations(existingCfg.AbbreviationPrefix, prefix, data)
+				}
 			}
-			// This is the case where we updated the prefix and zsh abbrs were
-			// already enabled, thus we should refresh them
-			if data != "" && existingCfg.ZshAbbreviations {
-				abbr.UpdateZshAbbreviations(existingCfg.AbbreviationPrefix, prefix, data)
+
+		} else {
+			fmt.Print("Enter abbreviation prefix (default 'pal'): ")
+			fmt.Scanln(&prefix)
+			if prefix == "" {
+				prefix = "pal"
 			}
 		}
 
-	} else {
-		fmt.Print("Enter abbreviation prefix (default 'pal'): ")
-		fmt.Scanln(&prefix)
-		if prefix == "" {
-			prefix = "pal"
+		var enableZshAbbreviations bool
+		if filepath.Base(shell) == "zsh" {
+			var defaultYes bool
+			if existingCfg != nil {
+				defaultYes = existingCfg.ZshAbbreviations
+			}
+			if defaultYes {
+				fmt.Print(`Do you want to enable zsh abbreviations? This requires the zsh-abbr plugin. Any abbreviations with the form "$prefix$i" will be overwritten. (Y/n): `)
+			} else {
+				fmt.Print(`Do you want to enable zsh abbreviations? This requires the zsh-abbr plugin. Any abbreviations with the form "$prefix$i" will be overwritten. (y/N): `)
+			}
+			var response string
+			fmt.Scanln(&response)
+			if defaultYes {
+				enableZshAbbreviations = response != "n" && response != "N"
+			} else {
+				enableZshAbbreviations = response == "y" || response == "Y"
+			}
 		}
-	}
 
-	var enableZshAbbreviations bool
-	if filepath.Base(shell) == "zsh" {
-		var defaultYes bool
-		if existingCfg != nil {
-			defaultYes = existingCfg.ZshAbbreviations
+		cfg := &config.Config{
+			Providers:          providers,
+			ZshAbbreviations:   enableZshAbbreviations,
+			AbbreviationPrefix: prefix,
 		}
-		if defaultYes {
-			fmt.Print(`Do you want to enable zsh abbreviations? This requires the zsh-abbr plugin. Any abbreviations with the form "$prefix$i" will be overwritten. (Y/n): `)
-		} else {
-			fmt.Print(`Do you want to enable zsh abbreviations? This requires the zsh-abbr plugin. Any abbreviations with the form "$prefix$i" will be overwritten. (y/N): `)
+
+		// If there's no model configured but there's a provider configured now,
+		// prompt the user to choose a model
+		if len(providers) > 0 {
+			if existingCfg != nil && existingCfg.SelectedModel != "" {
+				cfg.SelectedModel = existingCfg.SelectedModel
+			} else if existingCfg.SelectedModel == "" {
+				err = config.Models(cfg)
+				if err != nil {
+					return err
+				}
+			}
 		}
-		var response string
-		fmt.Scanln(&response)
-		if defaultYes {
-			enableZshAbbreviations = response != "n" && response != "N"
-		} else {
-			enableZshAbbreviations = response == "y" || response == "Y"
+
+		if err := config.SaveConfig(cfg); err != nil {
+			return fmt.Errorf("error saving config: %v", err)
 		}
-	}
 
-	cfg := &config.Config{
-		Providers:          providers,
-		ZshAbbreviations:   enableZshAbbreviations,
-		AbbreviationPrefix: prefix,
-	}
-
-	// If there's no model configured but there's a provider configured now,
-	// prompt the user to choose a model
-	if len(providers) > 0 {
-		if existingCfg != nil && existingCfg.SelectedModel != "" {
-			cfg.SelectedModel = existingCfg.SelectedModel
-		} else if existingCfg.SelectedModel == "" {
-			Models(cfg)
-		}
-	}
-
-	if err := config.SaveConfig(cfg); err != nil {
-		fmt.Printf("Error saving config: %v\n", err)
-		return
-	}
-
-	fmt.Printf("\nConfig saved successfully at %s\n", cfgPath)
+		fmt.Printf("\nConfig saved successfully at %s\n", cfgPath)
+		return nil
+	},
 }
