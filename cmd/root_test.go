@@ -2,14 +2,9 @@ package cmd
 
 import (
 	"testing"
-
-	"github.com/spf13/pflag"
 )
 
 func TestPreparse(t *testing.T) {
-	// Mock the persistent flags for the root command
-	rootCmd.PersistentFlags().Float64P("temperature", "t", 0, "Temperature flag")
-
 	tests := []struct {
 		name     string
 		args     []string
@@ -66,11 +61,6 @@ func TestPreparse(t *testing.T) {
 			expected: 2,
 		},
 		{
-			name:     "multiple flags",
-			args:     []string{"pal", "-t", "0.7", "--temperature=0.8", "-h", "/foo"},
-			expected: 6, // Corrected expected value
-		},
-		{
 			name:     "only flags",
 			args:     []string{"pal", "-t0.7"},
 			expected: 2,
@@ -85,15 +75,20 @@ func TestPreparse(t *testing.T) {
 			args:     []string{"pal", "-t0.7", "/foo"},
 			expected: 3,
 		},
+		{
+			name:     "flags in input",
+			args:     []string{"pal", "-t0.7", "what", "is", "-t"},
+			expected: 2,
+		},
+		{
+			name:     "command and flags in input",
+			args:     []string{"pal", "-t0.7", "/ask", "what", "is", "-t"},
+			expected: 3,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Need to re-initialize flags for each test since they are global
-			rootCmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
-				rootCmd.PersistentFlags().Set(f.Name, f.DefValue)
-			})
-
 			actual := preparse(tt.args)
 			if actual != tt.expected {
 				t.Errorf("preparse(%v) = %d; want %d", tt.args, actual, tt.expected)

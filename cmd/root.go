@@ -11,6 +11,7 @@ import (
 	"github.com/scottyeager/pal/config"
 	"github.com/scottyeager/pal/io"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 var fish bool
@@ -19,6 +20,8 @@ var zshAbbr bool
 var fishCompletion bool
 var zshCompletion bool
 var temperature float64
+
+var userMessage []string
 
 func init() {
 	rootCmd.Flags().BoolVar(&fish, "fish", false, "Print fish abbreviation script and completion script, then exit. Output is meant to be sourced by fish.")
@@ -54,18 +57,20 @@ It uses AI to generate commands and can also manage shell abbreviations.`,
 			return fmt.Errorf("error reading stdin: %v", err)
 		}
 
-		flagsSet := 0
+		// We call these command flags because they are really commands hiding
+		// as flags (since we can't use -- as a command prefix)
+		commandFlagsSet := 0
 		for _, flag := range []bool{fish, fishAbbr, zshAbbr, fishCompletion, zshCompletion} {
 			if flag {
-				flagsSet++
+				commandFlagsSet++
 			}
 		}
 
-		if len(args) < 1 && stdinInput == "" && flagsSet == 0 {
+		if len(userMessage) == 0 && stdinInput == "" && commandFlagsSet == 0 {
 			return fmt.Errorf("No input or commands detected")
 		} else if len(args) > 0 && strings.HasPrefix(args[0], "/") {
 			return fmt.Errorf("Invalid command.")
-		} else if flagsSet > 1 {
+		} else if commandFlagsSet > 1 {
 			return fmt.Errorf("Only one flag to print shell feature scripts can be used at once. To enable both completions and abbreviations in one shot for fish, use --fish.")
 		}
 
@@ -101,17 +106,17 @@ It uses AI to generate commands and can also manage shell abbreviations.`,
 		// Just to be sure we don't move on if any of these flags are set.
 		// Since users will be sourcing the output of these commands and we
 		// don't want AI output getting executed!
-		if flagsSet > 0 {
+		if commandFlagsSet > 0 {
 			return nil
 		}
 
 		var question string
-		if stdinInput != "" && len(args) > 0 {
-			question = stdinInput + "\nThat concludes the stdin contents. Now here's the query from the user:\n" + strings.Join(args, " ")
+		if stdinInput != "" && len(userMessage) > 0 {
+			question = stdinInput + "\nThat concludes the stdin contents. Now here's the query from the user:\n" + strings.Join(userMessage, " ")
 		} else if stdinInput != "" {
 			question = stdinInput
 		} else {
-			question = strings.Join(args, " ")
+			question = strings.Join(userMessage, " ")
 		}
 
 		if err := config.CheckConfiguration(cfg); err != nil {
@@ -156,7 +161,93 @@ It uses AI to generate commands and can also manage shell abbreviations.`,
 	},
 }
 
+func preparse(args []string) int {
+	boolLongFlags := []string{"help", "version"}
+	boolShortFlags := []string{"h", "v"}
+	longFlags := []string{}
+	shortFlags := []string{}
+	rootCmd.PersistentFlags().VisitAll(func(flag *pflag.Flag) {
+		longFlags = append(longFlags, flag.Name)
+		shortFlags = append(shortFlags, flag.Shorthand)
+	})
+
+	i := 1
+	for {
+		if strings.HasPrefix(args[i], "--") {
+			arg := strings.TrimPrefix(args[i], "--")
+			matched := false
+			for _, flag := range longFlags {
+				if strings.HasPrefix(arg, flag) {
+					if len(arg) == len(flag) {
+						// Consumes a flag like: --temperature 0
+						i += 2
+						matched = true
+						// Consumes a flag like: --temperature=0
+					} else {
+						i++
+						matched = true
+					}
+
+				}
+			}
+			for _, flag := range boolLongFlags {
+				if arg == flag {
+					i++
+					matched = true
+				}
+			}
+
+			if !matched {
+				break
+			}
+		} else if strings.HasPrefix(args[i], "-") {
+			arg := strings.TrimPrefix(args[i], "-")
+			matched := false
+			for _, flag := range shortFlags {
+				if strings.HasPrefix(arg, flag) {
+					if len(arg) == 1 {
+						// Consumes a flag like: -t 0
+						i += 2
+						matched = true
+					} else {
+						// Consumes a flag like: -t0
+						i++
+						matched = true
+					}
+				}
+			}
+			for _, flag := range boolShortFlags {
+				if arg == flag {
+					i++
+					matched = true
+				}
+			}
+			if !matched {
+				break
+			}
+		} else {
+			break
+		}
+		if i >= len(args)-1 {
+			break
+		}
+	}
+
+	if i <= len(args)-1 && strings.HasPrefix(args[i], "/") {
+		return i + 1
+	} else {
+		return i
+	}
+}
+
 func Execute() {
+	// if len(os.Args) > 1 && !strings.HasPrefix(os.Args[1], "--") {
+	if len(os.Args) > 1 {
+		split := preparse(os.Args)
+		userMessage = os.Args[split:]
+		os.Args = os.Args[:split]
+	}
+
 	if err := rootCmd.Execute(); err != nil {
 		// fmt.Println(err)
 		os.Exit(1)
