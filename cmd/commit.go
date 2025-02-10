@@ -18,7 +18,7 @@ func init() {
 
 var commitCmd = &cobra.Command{
 	Use:   "/commit",
-	Short: "Generate a commit message",
+	Short: "`git add` changed files and generate a commit message",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.LoadConfig()
 		if err != nil {
