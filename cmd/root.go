@@ -26,6 +26,7 @@ var temperature float64
 var userMessage []string
 
 func init() {
+	rootCmd.Flags().BoolVarP(&fish, "version", "V", false, "Print version number")
 	rootCmd.Flags().BoolVar(&fish, "fish", false, "Print fish abbreviation script and completion script, then exit. Output is meant to be sourced by fish.")
 	rootCmd.Flags().BoolVar(&zshAbbr, "fish-abbr", false, "Print fish abbreviation script and exit. Output is meant to be sourced by fish.")
 	rootCmd.Flags().BoolVar(&zshAbbr, "zsh-abbr", false, "Print zsh abbreviation script and exit. Output is meant to be sourced by zsh.")
@@ -171,8 +172,8 @@ It uses AI to generate commands and can also manage shell abbreviations.`,
 }
 
 func preparse(args []string) int {
-	boolLongFlags := []string{"help", "version"}
-	boolShortFlags := []string{"h", "v"}
+	boolLongFlags := []string{"help"}
+	boolShortFlags := []string{"h", "V"}
 	longFlags := []string{}
 	shortFlags := []string{}
 	rootCmd.Flags().VisitAll(func(flag *pflag.Flag) {
