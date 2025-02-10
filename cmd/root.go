@@ -166,6 +166,10 @@ func preparse(args []string) int {
 	boolShortFlags := []string{"h", "v"}
 	longFlags := []string{}
 	shortFlags := []string{}
+	rootCmd.Flags().VisitAll(func(flag *pflag.Flag) {
+		boolLongFlags = append(boolLongFlags, flag.Name)
+		// boolShortFlags = append(shortFlags, flag.Shorthand)
+	})
 	rootCmd.PersistentFlags().VisitAll(func(flag *pflag.Flag) {
 		longFlags = append(longFlags, flag.Name)
 		shortFlags = append(shortFlags, flag.Shorthand)
@@ -241,8 +245,8 @@ func preparse(args []string) int {
 }
 
 func Execute() {
-	// if len(os.Args) > 1 && !strings.HasPrefix(os.Args[1], "--") {
-	if len(os.Args) > 1 {
+	// Skip preparsing for hidden commands used to generate completions
+	if len(os.Args) > 1 && os.Args[1] != "__complete" && os.Args[1] != "__completeNoDesc" {
 		split := preparse(os.Args)
 		userMessage = os.Args[split:]
 		os.Args = os.Args[:split]
