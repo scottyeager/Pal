@@ -36,7 +36,8 @@ func init() {
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "pal",
+	// Use:   "pal",
+	Use:   os.Args[0],
 	Short: "pal is a command-line tool that suggests shell commands",
 	Long: `pal is a command-line tool that suggests shell commands based on your input.
 It uses AI to generate commands and can also manage shell abbreviations.`,
@@ -84,12 +85,18 @@ It uses AI to generate commands and can also manage shell abbreviations.`,
 		if fish {
 			fmt.Println(abbr.GetFishAbbrScript(cfg.AbbreviationPrefix))
 			cmd.GenFishCompletion(os.Stdout, true)
+			// Disables file name completions. Set command name dynamically in
+			// case the user changed it
+			fmt.Printf("complete -c %s -f", os.Args[0])
 			return nil
 		} else if fishAbbr {
 			fmt.Println(abbr.GetFishAbbrScript(cfg.AbbreviationPrefix))
 			return nil
 		} else if fishCompletion {
 			cmd.GenFishCompletion(os.Stdout, true)
+			// Disables file name completions. Set command name dynamically in
+			// case the user changed it
+			fmt.Printf("complete -c %s -f", os.Args[0])
 			return nil
 		} else if zshAbbr {
 			path, err := abbr.InstallZshAbbr()
