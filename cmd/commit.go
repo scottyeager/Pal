@@ -72,9 +72,11 @@ var commitCmd = &cobra.Command{
 		// Add any unstaged changes
 		if len(filesToCommit) > 0 {
 			addCmd := exec.Command("git", "add")
-			addCmd.Args = append(addCmd.Args, filesToCommit...)
+			for _, path := range filesToCommit {
+				addCmd.Args = append(addCmd.Args, ":/:"+path)
+			}
 			if err := addCmd.Run(); err != nil {
-				return fmt.Errorf("failed to add files: %w", err)
+				return fmt.Errorf("failed to add files: %w. Using git command: %s", err, addCmd)
 			}
 		}
 
