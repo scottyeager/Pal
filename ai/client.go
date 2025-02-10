@@ -24,6 +24,9 @@ type Client struct {
 
 func NewClient(cfg *config.Config) (*Client, error) {
 	parts := strings.SplitN(cfg.SelectedModel, "/", 2)
+	if len(parts) < 2 {
+		return nil, fmt.Errorf("Model name %s isn't valid. Please use /models to select a model again.", cfg.SelectedModel)
+	}
 	providerName, model := parts[0], parts[1]
 	provider := cfg.Providers[providerName]
 
