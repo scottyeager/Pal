@@ -14,6 +14,8 @@ import (
 	"github.com/spf13/pflag"
 )
 
+var version string
+
 var fish bool
 var fishAbbr bool
 var zshAbbr bool
@@ -252,6 +254,7 @@ func preparse(args []string) int {
 }
 
 func Execute() {
+	rootCmd.Version = version
 	// Skip preparsing for hidden commands used to generate completions
 	if len(os.Args) > 1 && os.Args[1] != "__complete" && os.Args[1] != "__completeNoDesc" {
 		split := preparse(os.Args)
