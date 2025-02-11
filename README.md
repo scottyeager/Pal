@@ -226,6 +226,14 @@ pal -t 2 /ask write a poem
 pal --temperature 0 /commit
 ```
 
+If you want to set the temperature for command suggestions, use the `/cmd` command explicitly:
+
+```
+pal -t 2 /cmd show me a crazy command
+```
+
+Without a slash command specified, `pal` will ignore the temperature flag and it will get treated as input for the AI.
+
 ## Which models to use?
 
 The command completion function of `pal` works well with the latest generation of flagship models:
