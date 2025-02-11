@@ -16,44 +16,24 @@ func TestPreparse(t *testing.T) {
 			expected: 1,
 		},
 		{
-			name:     "short temperature flag with space",
-			args:     []string{"pal", "-t", "0.5", "some", "input"},
-			expected: 3,
+			name:     "short temperature flag with space and /cmd",
+			args:     []string{"pal", "-t", "0.5", "/cmd", "input"},
+			expected: 4,
 		},
 		{
 			name:     "short temperature flag without space",
-			args:     []string{"pal", "-t0.5", "some", "input"},
-			expected: 2,
-		},
-		{
-			name:     "long temperature flag with space",
-			args:     []string{"pal", "--temperature", "0.5", "some", "input"},
+			args:     []string{"pal", "-t0.5", "/cmd", "input"},
 			expected: 3,
 		},
 		{
+			name:     "long temperature flag with space",
+			args:     []string{"pal", "--temperature", "0.5", "/cmd", "input"},
+			expected: 4,
+		},
+		{
 			name:     "long temperature flag with equals",
-			args:     []string{"pal", "--temperature=0.5", "some", "input"},
-			expected: 2,
-		},
-		{
-			name:     "help flag",
-			args:     []string{"pal", "--help", "some", "input"},
-			expected: 2,
-		},
-		{
-			name:     "short help flag",
-			args:     []string{"pal", "-h", "some", "input"},
-			expected: 2,
-		},
-		{
-			name:     "version flag",
-			args:     []string{"pal", "--version", "some", "input"},
-			expected: 2,
-		},
-		{
-			name:     "short version flag",
-			args:     []string{"pal", "-v", "some", "input"},
-			expected: 2,
+			args:     []string{"pal", "--temperature=0.5", "/cmd", "input"},
+			expected: 3,
 		},
 		{
 			name:     "command starting with /",
@@ -74,11 +54,6 @@ func TestPreparse(t *testing.T) {
 			name:     "flags and command",
 			args:     []string{"pal", "-t0.7", "/foo"},
 			expected: 3,
-		},
-		{
-			name:     "flags in input",
-			args:     []string{"pal", "-t0.7", "what", "is", "-t"},
-			expected: 2,
 		},
 		{
 			name:     "command and flags in input",

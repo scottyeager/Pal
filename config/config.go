@@ -45,6 +45,15 @@ func LoadConfig() (*Config, error) {
 	return &cfg, nil
 }
 
+func LoadConfigOrExit() *Config {
+	cfg, err := LoadConfig()
+	if err != nil {
+		fmt.Println("error loading config: %w", err)
+		os.Exit(1)
+	}
+	return cfg
+}
+
 func SaveConfig(cfg *Config) error {
 	cfgPath, err := GetConfigPath()
 	if err != nil {
