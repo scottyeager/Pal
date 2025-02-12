@@ -12,9 +12,9 @@ func init() {
 }
 
 var modelCmd = &cobra.Command{
-	Use:   "/model <model-name>",
-	Short: "Switch to a specific model",
-	Args:  cobra.ExactArgs(1),
+	Use:   "/model [model-name]",
+	Short: "Switch to the specified model, or print model name.",
+	Args:  cobra.MaximumNArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		cfg, err := config.LoadConfig()
 		if err != nil {
@@ -33,6 +33,11 @@ var modelCmd = &cobra.Command{
 		cfg, err := config.LoadConfig()
 		if err != nil {
 			return fmt.Errorf("error loading config: %w", err)
+		}
+
+		if len(args) == 0 {
+			fmt.Printf("Currently selected model: %s\n", cfg.SelectedModel)
+			return nil
 		}
 
 		// Check if model exists in providers
