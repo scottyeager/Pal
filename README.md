@@ -12,7 +12,7 @@ Perhaps unsurprisingly, xkcd [has](https://xkcd.com/1168/) elucidated the core s
 
 <br>`pal` helps diffuse the bomb that nukes our focus when leaving the shell to surf for answers on the web.
 
-## Quickstart
+## Install
 
 It's a single binary that you can just download into any location on your `$PATH`:
 
@@ -23,7 +23,7 @@ chmod +x /usr/local/bin/pal
 
 If the command name `pal` is already taken on your system, feel free to give it a name of your choice.
 
-### Config
+## Config
 
 You will need to provide an API key for an LLM provider. Several providers listed below have a free tier.
 
@@ -47,7 +47,7 @@ pal /config
 # Config saved successfully at ~/.config/pal_helper/config.yaml
 ```
 
-### Abbreviations
+## Abbreviations
 
 Abbreviations are an optional feature of `pal` that are highly recommended. When they are enabled, you can autofill the contents of the suggestions from the last `pal` invocation like this:
 
@@ -58,7 +58,7 @@ pal2 # Etc
 
 Both `fish` and `zsh` are supported for abbreviations.
 
-#### fish
+### fish
 
 The fastest way to enable both abbreviations and autocompletions on `fish` is like this:
 
@@ -72,7 +72,7 @@ To activate just abbreviations add the following to your `~/.config/fish/config.
 pal --fish-abbr | source
 ```
 
-#### zsh
+### zsh
 
 On `zsh` you will need the [zsh-abbr](https://github.com/olets/zsh-abbr) plugin. Broadly, there are two ways to install it:
 
@@ -89,7 +89,7 @@ Abbreviations for `zsh` must also be enabled in the `pal` config. You can run `p
 > Note: I'm a `fish` user, and I added `zsh` support after a bit of research into how to provide a similar experience. If you have ideas for how to make the `zsh` integration better or how to add support for your favorite shell, please open an issue on this repo and let me know. Thanks!
 
 
-### Autocompletion
+## Autocompletion
 
 Since `pal` is built with [Cobra](https://github.com/spf13/cobra), it's able to generate autocompletions for a variety of shells automatically. Currently only the `fish` and `zsh` completions are exposed.
 
@@ -101,7 +101,7 @@ To activate autocompletions add the following to your `~/.config/fish/config.fis
 pal --fish-abbr | source
 ```
 
-#### Zsh
+### Zsh
 
 In your `~/.zshrc`:
 
@@ -189,11 +189,19 @@ docker ps | pal how can I print the first four characters of the container ids o
 
 ### Model selection
 
-The `/models` command is used to select models and also check the currently selected model:
+The `/models` command can be used to view and select from configured models:
 
 ```
 pal /models
 ```
+
+To select a model by entering its name (with autcompletion), use `/model`:
+
+```
+pal /model mistral/codestral-latest
+```
+
+With no argument `/model` prints the currently selected model.
 
 For providers added through interactive config, a default set of models will be included. Depending on the provider, additional models may be available that could be added by editing the config file directly. You can also remove models you don't use so they won't show up in model selection list.
 
