@@ -51,6 +51,28 @@ func InstallZshAbbr() (string, error) {
 	return tmpDir + "/zsh-abbr.zsh", nil
 }
 
+func generatePermutations(newLines *[]string, prefix string, commands []string, max int, digits int, current string) {
+	if digits == 0 {
+		// Build the command from the digits
+		var cmdLines []string
+		for _, d := range current {
+			idx := int(d - '1')
+			if idx >= 0 && idx < len(commands) {
+				cmdLines = append(cmdLines, commands[idx])
+			}
+		}
+		if len(cmdLines) > 0 {
+			abbr := fmt.Sprintf(`abbr %s%s="%s"`, prefix, current, strings.Join(cmdLines, "\n"))
+			*newLines = append(*newLines, abbr)
+		}
+		return
+	}
+
+	for i := 1; i <= max; i++ {
+		generatePermutations(newLines, prefix, commands, max, digits-1, current + fmt.Sprintf("%d", i))
+	}
+}
+
 func UpdateZshAbbreviations(removePrefix string, addPrefix string, commands string) error {
 	abbrFile := os.Getenv("ABBR_USER_ABBREVIATIONS_FILE")
 	if abbrFile == "" {
@@ -67,24 +89,23 @@ func UpdateZshAbbreviations(removePrefix string, addPrefix string, commands stri
 	// Filter out existing abbreviations with removePrefix
 	var newLines []string
 	for _, line := range strings.Split(string(content), "\n") {
-		isPrefix := false
-		for i := 0; i <= 9; i++ {
-			if strings.HasPrefix(line, fmt.Sprintf("abbr %s%d=", removePrefix, i)) {
-				isPrefix = true
-				break
-			}
+		if strings.HasPrefix(line, fmt.Sprintf("abbr %s", removePrefix)) && 
+		   strings.Contains(line, "=") {
+			// Skip lines with our prefix
+			continue
 		}
-		if !isPrefix && line != "" {
+		if line != "" {
 			newLines = append(newLines, line)
 		}
 	}
 
 	// Add new abbreviations with addPrefix
 	commandLines := strings.Split(commands, "\n")
-	for i, line := range commandLines {
-		if line != "" {
-			abbr := fmt.Sprintf(`abbr %s%d="%s"`, addPrefix, i+1, line)
-			newLines = append(newLines, abbr)
+	// Generate all permutations of numbers for multi-line commands
+	for i := 1; i <= len(commandLines); i++ {
+		// Generate all number combinations from 1 to i digits
+		for digits := 1; digits <= 3; digits++ {
+			generatePermutations(&newLines, addPrefix, commandLines, i, digits, "")
 		}
 	}
 
