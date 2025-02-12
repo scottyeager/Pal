@@ -77,7 +77,7 @@ func preparse(args []string) int {
 	}
 
 	// Default case - no command found, all args are user message
-	return len(args)
+	return 1
 }
 
 func Execute() {

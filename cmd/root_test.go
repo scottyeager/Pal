@@ -13,7 +13,7 @@ func TestPreparse(t *testing.T) {
 		{
 			name:     "no flags",
 			args:     []string{"pal", "some", "input"},
-			expected: 3,
+			expected: 1,
 		},
 		{
 			name:     "short temperature flag with space and /cmd",
@@ -41,9 +41,9 @@ func TestPreparse(t *testing.T) {
 			expected: 2,
 		},
 		{
-			name:     "only flags",
+			name:     "only flags. the flag is treated as user message",
 			args:     []string{"pal", "-t0.7"},
-			expected: 2,
+			expected: 1,
 		},
 		{
 			name:     "only command",
