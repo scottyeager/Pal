@@ -15,6 +15,20 @@ var modelCmd = &cobra.Command{
 	Use:   "/model <model-name>",
 	Short: "Switch to a specific model",
 	Args:  cobra.ExactArgs(1),
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		cfg, err := config.LoadConfig()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+
+		var models []string
+		for providerName, provider := range cfg.Providers {
+			for _, model := range provider.Models {
+				models = append(models, providerName+"/"+model)
+			}
+		}
+		return models, cobra.ShellCompDirectiveNoFileComp
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.LoadConfig()
 		if err != nil {
