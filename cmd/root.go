@@ -57,19 +57,27 @@ It uses AI to generate commands and can also manage shell abbreviations.`,
 
 func preparse(args []string) int {
 	if strings.HasPrefix(args[1], "/") {
+		// A command can take either args or user message, not both
+		// If a command takes args, then we pass everything to Cobra
+		for _, cmd := range rootCmd.Commands() {
+			if cmd.Name() == args[1] && cmd.Args != nil {
+				return len(args)
+			}
+		}
 		return 2
 	}
 
+	// If first arg is a flag, look for a command after it
 	if strings.HasPrefix(args[1], "-") {
-		for i, arg := range args[2:] {
+		for i, arg := range args {
 			if strings.HasPrefix(arg, "/") {
-				return i + 3
+				return i + 1
 			}
 		}
-		return len(args)
 	}
 
-	return 1
+	// Default case - no command found, all args are user message
+	return len(args)
 }
 
 func Execute() {

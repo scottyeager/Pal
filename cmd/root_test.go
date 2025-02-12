@@ -13,7 +13,7 @@ func TestPreparse(t *testing.T) {
 		{
 			name:     "no flags",
 			args:     []string{"pal", "some", "input"},
-			expected: 1,
+			expected: 3,
 		},
 		{
 			name:     "short temperature flag with space and /cmd",
@@ -58,6 +58,11 @@ func TestPreparse(t *testing.T) {
 		{
 			name:     "command and flags in input",
 			args:     []string{"pal", "-t0.7", "/ask", "what", "is", "-t"},
+			expected: 3,
+		},
+		{
+			name:     "/model command",
+			args:     []string{"pal", "/model", "sooperAI/pal"},
 			expected: 3,
 		},
 	}
