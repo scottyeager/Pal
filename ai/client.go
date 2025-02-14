@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	
+	"github.com/charmbracelet/glamour"
 
 	anthropic "github.com/anthropics/anthropic-sdk-go"
 	anthropicOption "github.com/anthropics/anthropic-sdk-go/option"
@@ -107,7 +109,7 @@ func StoreCompletion(completion string) error {
 	return nil
 }
 
-func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt string, storeCompletion bool, temperature float64) (string, error) {
+func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt string, storeCompletion bool, temperature float64, formatMarkdown bool) (string, error) {
 	var completion string
 	var err error
 
@@ -167,5 +169,16 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 		}
 	}
 
+	if formatMarkdown {
+		r, _ := glamour.NewTermRenderer(
+			glamour.WithAutoStyle(),
+			glamour.WithWordWrap(80),
+		)
+		formatted, err := r.Render(completion)
+		if err != nil {
+			return completion, nil
+		}
+		return formatted, nil
+	}
 	return completion, nil
 }

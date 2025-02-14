@@ -13,6 +13,7 @@ type Config struct {
 	AbbreviationPrefix string              `yaml:"abbreviation_prefix"`
 	Providers          map[string]Provider `yaml:"providers"`
 	SelectedModel      string              `yaml:"selected_model"`
+	FormatMarkdown     bool                `yaml:"format_markdown"`
 }
 
 func GetConfigPath() (string, error) {
