@@ -154,6 +154,13 @@ If necessary, you can pass special characters to `pal` by quoting them:
 pal /ask what does this do: 'ls *.log'
 ```
 
+As of `fish` version 4, the question mark will no longer be used as a glob character by default. You can enable this behavior in earlier versions of `fish` like this:
+
+```fish
+set -U fish_features qmark-noglob
+# Takes effect in new shells
+```
+
 ### Stdin
 
 Anything passed to `pal` on `stdin` will be included with the prompt. That means you can do this:
