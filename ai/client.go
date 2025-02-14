@@ -178,6 +178,10 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 		if err != nil {
 			return completion, nil
 		}
+		// Trim just one newline from the end
+		if strings.HasSuffix(formatted, "\n") {
+			formatted = formatted[:len(formatted)-1]
+		}
 		return formatted, nil
 	}
 	return completion, nil
