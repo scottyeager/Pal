@@ -147,25 +147,26 @@ var configCmd = &cobra.Command{
 			}
 		}
 
+		// Prompt for markdown formatting
+		if existingCfg != nil && existingCfg.FormatMarkdown {
+			fmt.Printf("Markdown formatting is currently enabled. Keep it enabled? (Y/n): ")
+		} else {
+			fmt.Printf("Markdown formatting is currently disabled. Enable it? (y/N): ")
+		}
+		var markdownResponse string
+		fmt.Scanln(&markdownResponse)
+		var formatMarkdown bool
+		if markdownResponse == "" {
+			formatMarkdown = existingCfg != nil && existingCfg.FormatMarkdown
+		} else {
+			formatMarkdown = markdownResponse == "y" || markdownResponse == "Y"
+		}
+
 		cfg := &config.Config{
 			Providers:          providers,
 			ZshAbbreviations:   enableZshAbbreviations,
 			AbbreviationPrefix: prefix,
-			FormatMarkdown:     true,
-		}
-
-		// Prompt for markdown formatting
-		if existingCfg != nil && existingCfg.FormatMarkdown {
-			fmt.Print("Markdown formatting is currently enabled. Disable it? (y/N): ")
-		} else {
-			fmt.Print("Enable markdown formatting? (Y/n): ")
-		}
-		var markdownResponse string
-		fmt.Scanln(&markdownResponse)
-		if existingCfg != nil && existingCfg.FormatMarkdown {
-			cfg.FormatMarkdown = !(markdownResponse == "y" || markdownResponse == "Y")
-		} else {
-			cfg.FormatMarkdown = markdownResponse != "n" && markdownResponse != "N"
+			FormatMarkdown:     formatMarkdown,
 		}
 
 		// If there's no model configured but there's a provider configured now,

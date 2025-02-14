@@ -57,7 +57,7 @@ var askCmd = &cobra.Command{
 		if cmd.Flags().Changed("temperature") {
 			t = temperature
 		}
-		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, false, t, true)
+		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, false, t, cfg.FormatMarkdown)
 		if err != nil {
 			return fmt.Errorf("error getting completion: %w", err)
 		}
