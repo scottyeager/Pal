@@ -51,7 +51,7 @@ func InstallZshAbbr() (string, error) {
 	return tmpDir + "/zsh-abbr.zsh", nil
 }
 
-func generatePermutations(newLines *[]string, prefix string, commands []string, max int, digits int, current string) {
+func generatePermutations(newLines *[]string, prefix string, commands []string, max int, digits int, current string, used map[int]bool) {
 	if digits == 0 {
 		// Build the command from the digits
 		var cmdLines []string
@@ -68,14 +68,18 @@ func generatePermutations(newLines *[]string, prefix string, commands []string, 
 				escapedCmds[i] = strings.ReplaceAll(cmd, `"`, `\"`)
 			}
 			// Join with ; instead of newlines for better shell compatibility
-			abbr := fmt.Sprintf(`abbr %s%s="%s"`, prefix, current, strings.Join(escapedCmds, "; "))
+			abbr := fmt.Sprintf(`abbr %s%s="%s"`, prefix, current, strings.Join(escapedCmds, "\\n"))
 			*newLines = append(*newLines, abbr)
 		}
 		return
 	}
 
 	for i := 1; i <= max; i++ {
-		generatePermutations(newLines, prefix, commands, max, digits-1, current + fmt.Sprintf("%d", i))
+		if !used[i] {
+			used[i] = true
+			generatePermutations(newLines, prefix, commands, max, digits-1, current+fmt.Sprintf("%d", i), used)
+			used[i] = false
+		}
 	}
 }
 
@@ -95,8 +99,8 @@ func UpdateZshAbbreviations(removePrefix string, addPrefix string, commands stri
 	// Filter out existing abbreviations with removePrefix
 	var newLines []string
 	for _, line := range strings.Split(string(content), "\n") {
-		if strings.HasPrefix(line, fmt.Sprintf("abbr %s", removePrefix)) && 
-		   strings.Contains(line, "=") {
+		if strings.HasPrefix(line, fmt.Sprintf("abbr %s", removePrefix)) &&
+			strings.Contains(line, "=") {
 			// Skip lines with our prefix
 			continue
 		}
@@ -111,7 +115,8 @@ func UpdateZshAbbreviations(removePrefix string, addPrefix string, commands stri
 	for i := 1; i <= len(commandLines); i++ {
 		// Generate all number combinations from 1 to i digits
 		for digits := 1; digits <= 3; digits++ {
-			generatePermutations(&newLines, addPrefix, commandLines, i, digits, "")
+			used := make(map[int]bool)
+			generatePermutations(&newLines, addPrefix, commandLines, i, digits, "", used)
 		}
 	}
 
