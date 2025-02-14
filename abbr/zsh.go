@@ -62,7 +62,13 @@ func generatePermutations(newLines *[]string, prefix string, commands []string, 
 			}
 		}
 		if len(cmdLines) > 0 {
-			abbr := fmt.Sprintf(`abbr %s%s="%s"`, prefix, current, strings.Join(cmdLines, "\n"))
+			// Escape quotes in the command lines
+			escapedCmds := make([]string, len(cmdLines))
+			for i, cmd := range cmdLines {
+				escapedCmds[i] = strings.ReplaceAll(cmd, `"`, `\"`)
+			}
+			// Join with ; instead of newlines for better shell compatibility
+			abbr := fmt.Sprintf(`abbr %s%s="%s"`, prefix, current, strings.Join(escapedCmds, "; "))
 			*newLines = append(*newLines, abbr)
 		}
 		return
