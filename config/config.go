@@ -85,5 +85,23 @@ func CheckConfiguration(cfg *Config) error {
 	if cfg.SelectedModel == "" {
 		return fmt.Errorf("No model selected. Run 'pal /models' to select a model")
 	}
+
+	modelFound := false
+	for provider_name, provider := range cfg.Providers {
+		for _, model := range provider.Models {
+			if provider_name+"/"+model == cfg.SelectedModel {
+				modelFound = true
+				break
+			}
+		}
+		if modelFound {
+			break
+		}
+	}
+
+	if !modelFound {
+		return fmt.Errorf("Selected model '%s' not found in current configuration. Run 'pal /models' to select a valid model", cfg.SelectedModel)
+	}
+
 	return nil
 }
