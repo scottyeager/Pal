@@ -59,7 +59,7 @@ func Commands(cmd cobra.Command, query []string) error {
 	if cmd.Flags().Changed("temperature") {
 		t = temperature
 	}
-	response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, true, t)
+	response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, true, t, false)
 	if err != nil {
 		return fmt.Errorf("error getting completion: %v", err)
 	}

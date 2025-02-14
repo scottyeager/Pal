@@ -126,7 +126,7 @@ var commitCmd = &cobra.Command{
 			t = temperature
 		}
 
-		message, err := aiClient.GetCompletion(context.Background(), systemPrompt, prompt, false, t)
+		message, err := aiClient.GetCompletion(context.Background(), systemPrompt, prompt, false, t, false)
 		if err != nil {
 			return fmt.Errorf("failed to generate commit message: %w", err)
 		}

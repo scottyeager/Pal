@@ -151,6 +151,7 @@ var configCmd = &cobra.Command{
 			Providers:          providers,
 			ZshAbbreviations:   enableZshAbbreviations,
 			AbbreviationPrefix: prefix,
+			FormatMarkdown:     true,
 		}
 
 		// If there's no model configured but there's a provider configured now,
