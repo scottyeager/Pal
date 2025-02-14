@@ -154,6 +154,20 @@ var configCmd = &cobra.Command{
 			FormatMarkdown:     true,
 		}
 
+		// Prompt for markdown formatting
+		if existingCfg != nil && existingCfg.FormatMarkdown {
+			fmt.Print("Markdown formatting is currently enabled. Disable it? (y/N): ")
+		} else {
+			fmt.Print("Enable markdown formatting? (Y/n): ")
+		}
+		var markdownResponse string
+		fmt.Scanln(&markdownResponse)
+		if existingCfg != nil && existingCfg.FormatMarkdown {
+			cfg.FormatMarkdown = !(markdownResponse == "y" || markdownResponse == "Y")
+		} else {
+			cfg.FormatMarkdown = markdownResponse != "n" && markdownResponse != "N"
+		}
+
 		// If there's no model configured but there's a provider configured now,
 		// prompt the user to choose a model
 		if len(providers) > 0 {
