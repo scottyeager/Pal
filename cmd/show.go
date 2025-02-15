@@ -29,10 +29,19 @@ var showCmd = &cobra.Command{
 		}
 
 		commands := strings.Split(string(data), "\n")
+		var firstCommand string
 		for i, cmd := range commands {
-			if cmd != "" {
-				fmt.Printf("%d: %s\n", i+1, cmd)
+			if cmd == "" {
+				continue
 			}
+			if i == 0 {
+				firstCommand = cmd
+			} else {
+				fmt.Printf("%d: %s\n", i, cmd)
+			}
+		}
+		if firstCommand != "" {
+			fmt.Printf("0: %s\n", firstCommand)
 		}
 
 		if cfg.ZshAbbreviations {
