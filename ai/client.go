@@ -101,8 +101,26 @@ func StoreCompletion(completion string) error {
 		return fmt.Errorf("failed to create storage directory: %w", err)
 	}
 
-	// Write completion to file
-	if err := os.WriteFile(storagePath, []byte(completion), 0644); err != nil {
+	// Read existing content to preserve prefix0 if it exists
+	existingContent := ""
+	if _, err := os.Stat(storagePath); err == nil {
+		content, err := os.ReadFile(storagePath)
+		if err != nil {
+			return fmt.Errorf("failed to read existing completions: %w", err)
+		}
+		existingContent = string(content)
+	}
+
+	// Split content at the first newline to preserve prefix0
+	parts := strings.SplitN(existingContent, "\n", 2)
+	prefix0 := ""
+	if len(parts) > 0 {
+		prefix0 = parts[0] + "\n"
+	}
+
+	// Write new content with preserved prefix0
+	newContent := prefix0 + completion
+	if err := os.WriteFile(storagePath, []byte(newContent), 0644); err != nil {
 		return fmt.Errorf("failed to write completion: %w", err)
 	}
 
