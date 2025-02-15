@@ -47,6 +47,13 @@ var askCmd = &cobra.Command{
 			question = strings.Join(userMessage, " ")
 		}
 
+		var formatMarkdown bool
+		if markdown {
+			formatMarkdown = !cfg.FormatMarkdown
+		} else {
+			formatMarkdown = cfg.FormatMarkdown
+		}
+
 		system_prompt := "You are a helpful assistant that runs in the users shell but can answer on any topic. Keep responses concise"
 
 		if !cfg.FormatMarkdown {
@@ -57,7 +64,7 @@ var askCmd = &cobra.Command{
 		if cmd.Flags().Changed("temperature") {
 			t = temperature
 		}
-		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, false, t, cfg.FormatMarkdown)
+		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, false, t, formatMarkdown)
 		if err != nil {
 			return fmt.Errorf("error getting completion: %w", err)
 		}

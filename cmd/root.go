@@ -18,6 +18,7 @@ var zshAbbr bool
 var fishCompletion bool
 var zshCompletion bool
 var temperature float64
+var markdown bool
 
 var userMessage []string
 
@@ -29,6 +30,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&fishCompletion, "fish-completion", false, "Print fish autocompletion script and exit. Output is meant to be sourced by fish")
 	rootCmd.Flags().BoolVar(&zshCompletion, "zsh-completion", false, "Print zsh autocompletion script and exit. Output is meant to be sourced by zsh")
 	rootCmd.PersistentFlags().Float64VarP(&temperature, "temperature", "t", 0, "Set the temperature for the AI model, between 0 and 2 (higher values make output more random)")
+	rootCmd.PersistentFlags().BoolVarP(&markdown, "markdown", "m", false, "Toggle markdown formatting in output (inverts your config setting)")
 
 	// Disable help command. --help still works
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
