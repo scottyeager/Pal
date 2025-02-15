@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	
+
 	"github.com/charmbracelet/glamour"
 
 	anthropic "github.com/anthropics/anthropic-sdk-go"
@@ -178,7 +178,23 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 		if err != nil {
 			return completion, nil
 		}
-		// Trim just one newline from the end
+
+		// Remove the two space margin included in Glamour's default styles
+		// Since there's color codes included before the actual spaces, we need
+		// to remove what's before the spaces too. Yeah, it would be cleaner to
+		// actually ship updated styles, but this is easy and seems to work
+		lines := strings.Split(formatted, "\n")
+		for i, line := range lines {
+			parts := strings.Split(line, "  ")
+			if len(parts) > 1 {
+				lines[i] = parts[1]
+			} else {
+				lines[i] = parts[0]
+			}
+		}
+		formatted = strings.Join(lines, "\n")
+
+		// Also trim one newline from the end, again to adjust default style
 		if strings.HasSuffix(formatted, "\n") {
 			formatted = formatted[:len(formatted)-1]
 		}
