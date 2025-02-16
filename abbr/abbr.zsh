@@ -20,11 +20,19 @@ pal-expand-abbr() {
             BUFFER=$line
             # Move cursor to end of line
             zle end-of-line
+            # Add a space after expansion
+            zle self-insert
+            return
         fi
     fi
 
-    # Always add a space after expansion
-    zle self-insert
+    # If zsh-abbr is installed, defer to its expansion
+    if (( $+widgets[abbr-expand-and-insert] )); then
+        zle abbr-expand-and-insert
+    else
+        # Fallback to regular space
+        zle self-insert
+    fi
 }
 
 # Create the widget
