@@ -18,6 +18,8 @@ pal-expand-abbr() {
         if [[ -n $line ]]; then
             # Replace prefix+digit with the line
             BUFFER=$line
+            # Move cursor to end of line
+            zle end-of-line
         fi
     fi
 
