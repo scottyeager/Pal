@@ -4,10 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/scottyeager/pal/abbr"
-	"github.com/scottyeager/pal/ai"
 	"github.com/scottyeager/pal/config"
 	"github.com/spf13/cobra"
 )
@@ -96,27 +93,12 @@ var configCmd = &cobra.Command{
 			providers[selectedProvider] = config.NewProvider(selectedProvider, apiKey)
 		}
 
-		// Try to find the shell name, for zsh specific config
-		ppid := os.Getppid()
-		bytes, err := os.ReadFile("/proc/" + fmt.Sprint(ppid) + "/comm")
-		shell := strings.TrimSpace(string(bytes))
-
 		var prefix string
 		if existingCfg != nil && existingCfg.AbbreviationPrefix != "" {
 			fmt.Printf("Current abbreviation prefix is '%s'. Press enter to keep it, or enter a new one: ", existingCfg.AbbreviationPrefix)
 			fmt.Scanln(&prefix)
 			if prefix == "" {
 				prefix = existingCfg.AbbreviationPrefix
-			} else {
-				data, err := ai.GetStoredCompletion()
-				if err != nil {
-					fmt.Printf("Error reading data from disk: %v\n", err)
-				}
-				// This is the case where we updated the prefix and zsh abbrs were
-				// already enabled, thus we should refresh them
-				if data != "" && existingCfg.ZshAbbreviations {
-					abbr.UpdateZshAbbreviations(existingCfg.AbbreviationPrefix, prefix, data)
-				}
 			}
 
 		} else {
@@ -124,26 +106,6 @@ var configCmd = &cobra.Command{
 			fmt.Scanln(&prefix)
 			if prefix == "" {
 				prefix = "pal"
-			}
-		}
-
-		var enableZshAbbreviations bool
-		if filepath.Base(shell) == "zsh" {
-			var defaultYes bool
-			if existingCfg != nil {
-				defaultYes = existingCfg.ZshAbbreviations
-			}
-			if defaultYes {
-				fmt.Print(`Do you want to enable zsh abbreviations? This requires the zsh-abbr plugin. Any abbreviations with the form "$prefix$i" will be overwritten. (Y/n): `)
-			} else {
-				fmt.Print(`Do you want to enable zsh abbreviations? This requires the zsh-abbr plugin. Any abbreviations with the form "$prefix$i" will be overwritten. (y/N): `)
-			}
-			var response string
-			fmt.Scanln(&response)
-			if defaultYes {
-				enableZshAbbreviations = response != "n" && response != "N"
-			} else {
-				enableZshAbbreviations = response == "y" || response == "Y"
 			}
 		}
 
@@ -164,7 +126,6 @@ var configCmd = &cobra.Command{
 
 		cfg := &config.Config{
 			Providers:          providers,
-			ZshAbbreviations:   enableZshAbbreviations,
 			AbbreviationPrefix: prefix,
 			FormatMarkdown:     formatMarkdown,
 		}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/scottyeager/pal/abbr"
 	"github.com/scottyeager/pal/ai"
 	"github.com/scottyeager/pal/config"
 	"github.com/scottyeager/pal/io"
@@ -73,13 +72,6 @@ func Commands(cmd cobra.Command, query []string) error {
 		}
 	}
 	response = strings.Join(nonEmptyLines, "\n")
-
-	if cfg.ZshAbbreviations {
-		prefix := cfg.AbbreviationPrefix
-		if err := abbr.UpdateZshAbbreviations(prefix, prefix, response); err != nil {
-			return fmt.Errorf("error updating zsh abbreviations: %w", err)
-		}
-	}
 
 	fmt.Println(response)
 	return nil

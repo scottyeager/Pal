@@ -112,14 +112,9 @@ func Execute() {
 			fmt.Printf("complete -c %s -f", os.Args[0])
 			os.Exit(0)
 		case "--zsh-abbr":
-			path, err := abbr.InstallZshAbbr()
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			} else {
-				fmt.Println(path)
-				os.Exit(0)
-			}
+			cfg := config.LoadConfigOrExit()
+			fmt.Println(abbr.GetZshAbbrScript(cfg.AbbreviationPrefix))
+			os.Exit(0)
 		case "--zsh-completion":
 			rootCmd.GenZshCompletionNoDesc(os.Stdout)
 			os.Exit(0)

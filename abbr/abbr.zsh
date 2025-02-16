@@ -9,23 +9,42 @@ pal-expand-abbr() {
     local buffer=$BUFFER
     local prefix_length=${#pal_prefix}
 
-    # Check if buffer starts with prefix and ends with a digit
-    if [[ $buffer[1,$prefix_length] == $pal_prefix && $buffer[-1] =~ ^[0-9]$ ]]; then
-        # Get the digit (0-9)
-        local digit=$buffer[-1]
+    # Check if buffer starts with prefix and has digits
+    if [[ $buffer =~ ^${pal_prefix}[0-9]+ ]]; then
+        # Get the digits
+        local digits=${buffer[$((prefix_length+1)),-1]}
 
-        # Read the corresponding line from file (1-based index)
-        local line=$(sed -n "$((digit + 1))p" $PAL_ABBR_FILE 2>/dev/null)
-
-        if [[ -n $line ]]; then
-            # Replace prefix+digit with the line
-            BUFFER=$line
-            # Move cursor to end of line
-            zle end-of-line
-            # Add a space after expansion
-            zle self-insert
-            return
+        # Handle prefix0 specially (first line)
+        if [[ $digits == "0" ]]; then
+            local line=$(head -n1 $PAL_ABBR_FILE 2>/dev/null)
+            if [[ -n $line ]]; then
+                BUFFER=$line
+                zle end-of-line
+                zle self-insert
+                return
+            fi
         fi
+
+        # Handle multi-digit expansion
+        local -a lines
+        for ((i=0; i<${#digits}; i++)); do
+            # Skip first line (prefix0) for regular digits
+            local line_num=$((${digits:$i:1} + 1))
+            local line=$(sed -n "${line_num}p" $PAL_ABBR_FILE 2>/dev/null)
+            if [[ -n $line ]]; then
+                lines+=("$line")
+            fi
+        done
+
+        if [[ ${#lines} -gt 0 ]]; then
+            # Join lines with newlines
+            BUFFER=${(F)lines}
+            # For some reason we end up on the second line when expanding three
+            # lines, so we need to move to the end of the buffer rather than
+            # just the end of the line
+            CURSOR=${#BUFFER}
+        fi
+        zle self-insert
 
     # If zsh-abbr is installed, defer to its expansion
     elif [[ -n $widgets[abbr-expand-and-insert] ]]; then

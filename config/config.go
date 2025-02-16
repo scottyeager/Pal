@@ -9,7 +9,6 @@ import (
 )
 
 type Config struct {
-	ZshAbbreviations   bool                `yaml:"zsh_abbreviations"`
 	AbbreviationPrefix string              `yaml:"abbreviation_prefix"`
 	Providers          map[string]Provider `yaml:"providers"`
 	SelectedModel      string              `yaml:"selected_model"`
