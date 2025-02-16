@@ -1,5 +1,7 @@
 # File containing the command lines to expand to
 local PAL_ABBR_FILE=~/.local/share/pal_helper/completions.txt
+# Default prefix value if not set
+local pal_prefix=${pal_prefix:-pal}
 
 # Widget function to expand prefix+digit
 pal-expand-abbr() {
@@ -24,13 +26,13 @@ pal-expand-abbr() {
             zle self-insert
             return
         fi
-    fi
 
     # If zsh-abbr is installed, defer to its expansion
-    if (( $+widgets[abbr-expand-and-insert] )); then
+    elif [[ -n $widgets[abbr-expand-and-insert] ]]; then
         zle abbr-expand-and-insert
+
+    # Fallback to regular space
     else
-        # Fallback to regular space
         zle self-insert
     fi
 }
