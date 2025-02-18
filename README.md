@@ -12,7 +12,7 @@ Perhaps unsurprisingly, xkcd [has](https://xkcd.com/1168/) elucidated the core s
 
 <br>`pal` helps diffuse the bomb that nukes our focus when leaving the shell to surf for answers on the web.
 
-## Install
+## Quickstart
 
 It's a single binary that you can just download into any location on your `$PATH`:
 
@@ -22,6 +22,20 @@ chmod +x /usr/local/bin/pal
 ```
 
 If the command name `pal` is already taken on your system, feel free to give it a name of your choice.
+
+To conveniently install autocompletions and the abbreviation feature:
+
+```
+# fish
+pal --fish-config >> ~/.config/fish/config.fish
+
+# zsh
+pal --zsh-config >> ~/.zshrc
+
+# Start a new shell or source your config file from an existing shell
+```
+
+More information about these features and how to install them individually can be found at the relevent docs pages: autocompletion and [abbreviations](https://github.com/scottyeager/Pal/blob/main/docs/abbreviations.md).
 
 ## Config
 
@@ -56,38 +70,7 @@ pal1 # Hit space and first suggestion will be filled
 pal2 # Etc
 ```
 
-Both `fish` and `zsh` are supported for abbreviations.
-
-### fish
-
-The fastest way to enable both abbreviations and autocompletions on `fish` is like this:
-
-```
-echo pal --fish | source >> ~/.config/fish/config.fish
-```
-
-To activate just abbreviations add the following to your `~/.config/fish/config.fish`:
-
-```sh
-pal --fish-abbr | source
-```
-
-### zsh
-
-On `zsh` you will need the [zsh-abbr](https://github.com/olets/zsh-abbr) plugin. Broadly, there are two ways to install it:
-
-1. Pal contains a copy of zsh-abbr and you can install it by adding this to `~/.zshrc`:
-
-```sh
-source $(pal --zsh-abbr)
-```
-
-2. If you prefer, [install `zsh-abbr`](https://zsh-abbr.olets.dev/installation.html) in one of the usual ways, such as with a `zsh` plugin manager or a system package
-
-Abbreviations for `zsh` must also be enabled in the `pal` config. You can run `pal /config` again or edit `~/.config/pal_helper/config.yaml` if you didn't enable them initially.
-
-> Note: I'm a `fish` user, and I added `zsh` support after a bit of research into how to provide a similar experience. If you have ideas for how to make the `zsh` integration better or how to add support for your favorite shell, please open an issue on this repo and let me know. Thanks!
-
+Both `fish` and `zsh` are supported for abbreviations. If you followed the quickstart, abbreviations will be available in every new shell or after sourcing the shell config file. For more info, see [abbreviations](https://github.com/scottyeager/Pal/blob/main/docs/abbreviations.md).
 
 ## Autocompletion
 
