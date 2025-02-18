@@ -203,7 +203,7 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 		// actually ship updated styles, but this is easy and seems to work
 		lines := strings.Split(formatted, "\n")
 		for i, line := range lines {
-			parts := strings.Split(line, "  ")
+			parts := strings.SplitN(line, "  ", 2)
 			if len(parts) > 1 {
 				lines[i] = parts[1]
 			} else {
