@@ -25,11 +25,11 @@ If the command name `pal` is already taken on your system, feel free to give it 
 
 To conveniently install autocompletions and the abbreviation feature:
 
-```
+```sh
 # fish
 pal --fish-config >> ~/.config/fish/config.fish
 
-# zsh
+# zsh (autocomplete is an optional feature in zsh--see details below)
 pal --zsh-config >> ~/.zshrc
 
 # Start a new shell or source your config file from an existing shell
@@ -76,12 +76,15 @@ Both `fish` and `zsh` are supported for abbreviations. If you followed the quick
 
 Since `pal` is built with [Cobra](https://github.com/spf13/cobra), it's able to generate autocompletions for a variety of shells automatically. Currently only the `fish` and `zsh` completions are exposed.
 
-#### Fish
+
+If you followed the quickstart, then you've already installed the autocompletions. These instructions are for installing the autocompletions separately from the abbreviations feature.
+
+### Fish
 
 To activate autocompletions add the following to your `~/.config/fish/config.fish`:
 
 ```sh
-pal --fish-abbr | source
+pal --fish-completion | source
 ```
 
 ### Zsh
