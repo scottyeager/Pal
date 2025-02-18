@@ -61,3 +61,6 @@ zle -N pal-expand-abbr
 
 # Bind space key to our widget
 bindkey ' ' pal-expand-abbr
+
+# Ctrl-space always makes a space character
+bindkey "^ " magic-space
