@@ -65,6 +65,9 @@ var commitCmd = &cobra.Command{
 				// Check for modified (M), unstaged files (second column)
 				if line[1] == 'M' && line[0] != 'R' {
 					filesToCommit = append(filesToCommit, strings.TrimSpace(line[3:]))
+					// Renamed file that was also modified
+				} else if line[0] == 'R' && line[1] == 'M' {
+					filesToCommit = append(filesToCommit, strings.TrimSpace(strings.Split(line[3:], "->")[1]))
 				}
 			}
 		}
