@@ -5,9 +5,9 @@ if not set -q pal_prefix
 end
 
 function _pal_get_completion
-    set completions_file ~/.local/share/pal_helper/completions.txt
+    set completions_file ~/.local/share/pal_helper/expansions.txt
     set suffix (string match -r "$pal_prefix(\d+)" $argv[1] | tail -n1)
-    
+
     # Handle prefix0 specially
     if test "$suffix" = "0"
         # Return just the first line (prefix0 content)
@@ -15,7 +15,7 @@ function _pal_get_completion
         echo $completion
         return
     end
-    
+
     # Handle regular completions
     set line_numbers (string split "" $suffix)
     mkdir -p (dirname $completions_file)
