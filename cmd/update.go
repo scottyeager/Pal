@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/scottyeager/pal/io"
+	"github.com/scottyeager/pal/inout"
 	"github.com/spf13/cobra"
 )
 
@@ -50,7 +50,7 @@ var updateCmd = &cobra.Command{
 
 		fmt.Printf("New version available: %s (you have %s)\n", latestVersion, version)
 		updateCmd := `wget https://github.com/scottyeager/Pal/releases/latest/download/pal-linux-amd64 -O /usr/local/bin/pal && chmod +x /usr/local/bin/pal`
-		err = io.StorePrefix0Command(updateCmd)
+		err = inout.StorePrefix0Command(updateCmd)
 		if err != nil {
 			return fmt.Errorf("error storing update command: %w", err)
 		}

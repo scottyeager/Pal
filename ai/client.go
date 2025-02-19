@@ -12,7 +12,7 @@ import (
 	openai "github.com/openai/openai-go"
 	openaiOption "github.com/openai/openai-go/option"
 	"github.com/scottyeager/pal/config"
-	"github.com/scottyeager/pal/io"
+	"github.com/scottyeager/pal/inout"
 )
 
 type Client struct {
@@ -110,7 +110,7 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 	}
 	if storeCommands {
 		// Store the completion
-		err = io.StoreCommands(completion)
+		err = inout.StoreCommands(completion)
 		if err != nil {
 			return completion, fmt.Errorf("failed to write to disk: %w", err)
 		}

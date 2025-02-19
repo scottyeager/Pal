@@ -63,7 +63,7 @@ var commitCmd = &cobra.Command{
 		for _, line := range lines {
 			if len(line) > 3 {
 				// Check for modified (M), unstaged files (second column)
-				if line[1] == 'M' {
+				if line[1] == 'M' && line[0] != 'R' {
 					filesToCommit = append(filesToCommit, strings.TrimSpace(line[3:]))
 				}
 			}

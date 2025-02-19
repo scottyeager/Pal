@@ -7,7 +7,7 @@ import (
 
 	"github.com/scottyeager/pal/ai"
 	"github.com/scottyeager/pal/config"
-	"github.com/scottyeager/pal/io"
+	"github.com/scottyeager/pal/inout"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ var askCmd = &cobra.Command{
 	Use:   "/ask",
 	Short: "Ask a question to the AI",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		stdinInput, err := io.ReadStdin()
+		stdinInput, err := inout.ReadStdin()
 		if err != nil {
 			return err
 		}

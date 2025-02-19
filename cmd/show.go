@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/scottyeager/pal/io"
+	"github.com/scottyeager/pal/inout"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +17,7 @@ var showCmd = &cobra.Command{
 	Use:   "/show",
 	Short: "Show the last generated commands",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		data, err := io.GetStoredCommands()
+		data, err := inout.GetStoredCommands()
 		if err != nil {
 			return fmt.Errorf("error reading data from disk: %w", err)
 		}
