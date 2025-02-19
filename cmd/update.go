@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"runtime"
 	"strings"
 
+	"github.com/scottyeager/pal/config"
 	"github.com/scottyeager/pal/inout"
 	"github.com/spf13/cobra"
 )
@@ -48,13 +51,41 @@ var updateCmd = &cobra.Command{
 			return nil
 		}
 
-		fmt.Printf("New version available: %s (you have %s)\n", latestVersion, version)
-		updateCmd := `wget https://github.com/scottyeager/Pal/releases/latest/download/pal-linux-amd64 -O /usr/local/bin/pal && chmod +x /usr/local/bin/pal`
+		cfg, err := config.LoadConfig()
+		if err != nil {
+			return fmt.Errorf("error loading config: %v", err)
+		}
+
+		fmt.Printf("Current version: %s\n", version)
+		fmt.Printf("New version available: %s\n\n", latestVersion)
+		execPath, err := os.Executable()
+		if err != nil {
+			return fmt.Errorf("error getting executable path: %w", err)
+		}
+		var binaryName string
+		switch runtime.GOOS {
+		case "darwin":
+			if runtime.GOARCH == "arm64" {
+				binaryName = "pal-darwin-arm64"
+			} else {
+				binaryName = "pal-darwin-amd64"
+			}
+		case "linux":
+			if runtime.GOARCH == "arm64" {
+				binaryName = "pal-linux-arm64"
+			} else {
+				binaryName = "pal-linux-amd64"
+			}
+		default:
+			return fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
+		}
+		updateCmd := fmt.Sprintf(`wget https://github.com/scottyeager/Pal/releases/latest/download/%s -O %s && chmod +x %s`, binaryName, execPath, execPath)
 		err = inout.StorePrefix0Command(updateCmd)
 		if err != nil {
 			return fmt.Errorf("error storing update command: %w", err)
 		}
-		fmt.Println("Update command stored as prefix0. Run 'pal /show' to see it.")
+		fmt.Printf("If you have abbreviations enabled, you can expand the following command with %s0 to update pal:\n\n", cfg.AbbreviationPrefix)
+		fmt.Println(updateCmd)
 		return nil
 	},
 }
