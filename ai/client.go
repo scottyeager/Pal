@@ -16,6 +16,8 @@ import (
 	"github.com/scottyeager/pal/config"
 )
 
+const commandFileName = "expansions.txt"
+
 type Client struct {
 	openaiClient    *openai.Client
 	anthropicClient *anthropic.Client
@@ -62,7 +64,7 @@ func GetStoredCompletion() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get home directory: %w", err)
 	}
-	storagePath := filepath.Join(homeDir, ".local", "share", "pal_helper", "completions.txt")
+	storagePath := filepath.Join(homeDir, ".local", "share", "pal_helper", commandFileName)
 
 	// Ensure directory exists
 	storageDir := filepath.Dir(storagePath)
@@ -93,7 +95,7 @@ func StoreCompletion(completion string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get home directory: %w", err)
 	}
-	storagePath := filepath.Join(homeDir, ".local", "share", "pal_helper", "completions.txt")
+	storagePath := filepath.Join(homeDir, ".local", "share", "pal_helper", commandFileName)
 
 	// Ensure directory exists
 	storageDir := filepath.Dir(storagePath)
@@ -106,7 +108,7 @@ func StoreCompletion(completion string) error {
 	if _, err := os.Stat(storagePath); err == nil {
 		content, err := os.ReadFile(storagePath)
 		if err != nil {
-			return fmt.Errorf("failed to read existing completions: %w", err)
+			return fmt.Errorf("failed to read existing commands: %w", err)
 		}
 		existingContent = string(content)
 	}
@@ -121,7 +123,15 @@ func StoreCompletion(completion string) error {
 	// Write new content with preserved prefix0
 	newContent := prefix0 + completion
 	if err := os.WriteFile(storagePath, []byte(newContent), 0644); err != nil {
-		return fmt.Errorf("failed to write completion: %w", err)
+		return fmt.Errorf("failed to write commands to disk: %w", err)
+	}
+
+	// Clean up the old file if it exists. This shouldn't slow us down if the
+	// file no longer exists, since stat hits cached data
+	oldPath := filepath.Join(homeDir, ".local", "share", "pal_helper", "completions.txt")
+	if _, err := os.Stat(oldPath); !os.IsNotExist(err) {
+		// If both exist, remove the old one
+		os.Remove(oldPath)
 	}
 
 	return nil
