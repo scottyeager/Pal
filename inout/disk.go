@@ -1,4 +1,4 @@
-package io
+package inout
 
 import (
 	"fmt"
@@ -38,6 +38,44 @@ func GetStoredCommands() (string, error) {
 	}
 
 	return string(content), nil
+}
+
+func StorePrefix0Command(command string) error {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %w", err)
+	}
+	storagePath := filepath.Join(homeDir, ".local", "share", "pal_helper", commandFileName)
+
+	// Ensure directory exists
+	storageDir := filepath.Dir(storagePath)
+	if err := os.MkdirAll(storageDir, 0755); err != nil {
+		return fmt.Errorf("failed to create storage directory: %w", err)
+	}
+
+	// Read existing content to preserve expansions
+	existingContent := ""
+	if _, err := os.Stat(storagePath); err == nil {
+		content, err := os.ReadFile(storagePath)
+		if err != nil {
+			return fmt.Errorf("failed to read existing commands: %w", err)
+		}
+		existingContent = string(content)
+	}
+
+	// Split content at the first newline to get expansions
+	expansions := ""
+	if parts := strings.SplitN(existingContent, "\n", 2); len(parts) > 1 {
+		expansions = parts[1]
+	}
+
+	// Write new content with prefix0 command and preserved expansions
+	newContent := command + "\n" + expansions
+	if err := os.WriteFile(storagePath, []byte(newContent), 0644); err != nil {
+		return fmt.Errorf("failed to write prefix0 command to disk: %w", err)
+	}
+
+	return nil
 }
 
 func StoreCommands(completion string) error {
