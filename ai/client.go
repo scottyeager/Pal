@@ -26,7 +26,7 @@ type Client struct {
 func NewClient(cfg *config.Config) (*Client, error) {
 	parts := strings.SplitN(cfg.SelectedModel, "/", 2)
 	if len(parts) < 2 {
-		return nil, fmt.Errorf("Model name %s isn't valid. Please use /models to select a model again.", cfg.SelectedModel)
+		return nil, fmt.Errorf("Model name %s isn't valid. Please use /models or /model to select a valid model.", cfg.SelectedModel)
 	}
 	providerName, model := parts[0], parts[1]
 	provider := cfg.Providers[providerName]
@@ -96,7 +96,7 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 		}
 
 		if len(resp.Choices) == 0 {
-			return "", fmt.Errorf("no completion choices returned")
+			return "", fmt.Errorf("no command choices returned")
 		}
 
 		completion = resp.Choices[0].Message.Content
