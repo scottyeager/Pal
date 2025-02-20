@@ -18,7 +18,7 @@ var markdown bool
 var userMessage []string
 
 func init() {
-	rootCmd.Flags().BoolP("version", "V", false, "Print version number")
+	rootCmd.Flags().Bool("version", false, "Print version number")
 	rootCmd.Flags().Bool("fish", false, "Print fish abbreviation script and completion script, then exit. Output is meant to be sourced by fish")
 	rootCmd.Flags().Bool("zsh", false, "Print zsh abbreviation script and completion script, then exit. Output is meant to be sourced by zsh")
 	rootCmd.Flags().Bool("fish-config", false, "Outputs lines mean to be appended to fish.config, to enable autocompletions and abbreviations")
@@ -83,7 +83,11 @@ func preparse(args []string) int {
 }
 
 func Execute() {
-	rootCmd.Version = version
+	if version != "" {
+		rootCmd.Version = version
+	} else {
+		rootCmd.Version = "dev"
+	}
 
 	// We define these as Cobra flags, so that help and autocomplete works, but
 	// we handle them straight out of the gate here and bypass Cobra. One reason
@@ -133,7 +137,7 @@ func Execute() {
 		case "--zsh-completion":
 			rootCmd.GenZshCompletionNoDesc(os.Stdout)
 			os.Exit(0)
-		case "--help", "-h", "--version", "-V", "__complete", "__completeNoDesc":
+		case "--help", "-h", "--version", "__complete", "__completeNoDesc":
 			// No-op here, just skipping preparsing
 		default:
 			split := preparse(os.Args)

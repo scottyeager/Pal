@@ -32,6 +32,10 @@ func Commands(cmd cobra.Command, query []string) error {
 		return fmt.Errorf("error reading stdin: %v", err)
 	}
 
+	if len(userMessage) == 0 && stdinInput == "" {
+		return fmt.Errorf("No input detected")
+	}
+
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return fmt.Errorf("error loading config: %v", err)
