@@ -18,6 +18,9 @@ func init() {
 var askCmd = &cobra.Command{
 	Use:   "/ask",
 	Short: "Ask a question to the AI",
+	Annotations: map[string]string{
+		"takes_user_message": "true",
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		stdinInput, err := inout.ReadStdin()
 		if err != nil {

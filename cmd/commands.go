@@ -18,6 +18,9 @@ func init() {
 var cmdCmd = &cobra.Command{
 	Use:   "/cmd",
 	Short: "Get command suggestions (default)",
+	Annotations: map[string]string{
+		"takes_user_message": "true",
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return Commands(*cmd, args)
 	},
