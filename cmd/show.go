@@ -11,6 +11,7 @@ import (
 func init() {
 	rootCmd.AddCommand(showCmd)
 	rootCmd.AddCommand(updateCmd)
+	showCmd.Flags().BoolP("all", "a", false, "Show all expansions including 0")
 }
 
 var showCmd = &cobra.Command{
@@ -22,20 +23,18 @@ var showCmd = &cobra.Command{
 			return fmt.Errorf("error reading data from disk: %w", err)
 		}
 
+		showAll, _ := cmd.Flags().GetBool("all")
 		commands := strings.Split(string(data), "\n")
-		var firstCommand string
-		for i, cmd := range commands {
+		for i, cmd := range commands[1:] {
 			if cmd == "" {
 				continue
 			}
-			if i == 0 {
-				firstCommand = cmd
-			} else {
-				fmt.Printf("%d: %s\n", i, cmd)
-			}
+			fmt.Printf("%d: %s\n", i, cmd)
 		}
-		if firstCommand != "" {
-			fmt.Printf("0: %s\n", firstCommand)
+
+		// Display first command last if showing all
+		if showAll && len(commands) > 0 && commands[0] != "" {
+			fmt.Printf("0: %s\n", commands[0])
 		}
 
 		return nil
