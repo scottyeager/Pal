@@ -29,7 +29,7 @@ var showCmd = &cobra.Command{
 			if cmd == "" {
 				continue
 			}
-			fmt.Printf("%d: %s\n", i, cmd)
+			fmt.Printf("%d: %s\n", i+1, cmd)
 		}
 
 		// Display first command last if showing all
