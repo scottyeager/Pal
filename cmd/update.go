@@ -79,7 +79,7 @@ var updateCmd = &cobra.Command{
 		default:
 			return fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 		}
-		updateCmd := fmt.Sprintf(`wget https://github.com/scottyeager/Pal/releases/latest/download/%s -O %s && chmod +x %s`, binaryName, execPath, execPath)
+		updateCmd := fmt.Sprintf(`wget -q https://github.com/scottyeager/Pal/releases/latest/download/%s -O %s && chmod +x %s`, binaryName, execPath, execPath)
 		err = inout.StorePrefix0Command(updateCmd)
 		if err != nil {
 			return fmt.Errorf("error storing update command: %w", err)
