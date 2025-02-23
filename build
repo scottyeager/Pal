@@ -1,0 +1,2 @@
+#!/bin/bash
+go build -ldflags "-X github.com/scottyeager/pal/cmd.version=$(git rev-parse --abbrev-ref HEAD)-$(git rev-parse --short HEAD)"
