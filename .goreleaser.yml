@@ -1,0 +1,28 @@
+# .goreleaser.yml
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -X github.com/scottyeager/pal/cmd.version={{.Version}}
+    binary: pal
+
+archives:
+  - format: binary
+    name_template: "pal-{{.Os}}-{{.Arch}}"
+
+release:
+  github:
+    owner: scottyeager
+    name: pal
+  draft: false
+  prerelease: auto
