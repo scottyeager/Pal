@@ -1,4 +1,6 @@
 # .goreleaser.yml
+version: 2
+
 before:
   hooks:
     - go mod download
@@ -17,7 +19,8 @@ builds:
     binary: pal
 
 archives:
-  - format: binary
+  - formats:
+      - binary
     name_template: "pal-{{.Os}}-{{.Arch}}"
 
 release:
