@@ -101,12 +101,14 @@ var commitCmd = &cobra.Command{
 		systemPrompt := `You are a helpful assistant who generates concise and complete git commit messages based on code changes in diff format. Use the Conventional Commit style.
 
 		Follow these guidelines:
-		- Write a single line under 72 characters
+		- Write a short summary of all changes on the first line
+		- The first line should be 72 characters or less
+		- If more context is needed, continue on additional lines to explain the changes
 		- Use imperative mood (e.g. "Fix bug" not "Fixed bug")
-		- Review the diffs carfully and summarize them at a high level
+		- Review the diffs carefully and summarize them at a high level
 		- Check for context in the previous commit messages
 
-		Choose one of the following types to begin the message:
+		Choose one of the following types to begin the message, only add it on the first line:
 
 		feat: New feature
 		fix: Bug fix
@@ -118,10 +120,12 @@ var commitCmd = &cobra.Command{
 		chore: Build/config/tooling
 		perf: Performance improvements
 
-		Respond only with a single line containing the commit message. No explanations, additional formatting, or line breaks, please.`
+		Respond only with the commit message. No explanations, additional formatting, or line breaks, please.`
 
-		prompt := `Recent commit history: ` + string(logOut) + `Diffs for this commit: ` + string(diffOut)
+		prompt := `Recent commit history:\n` + string(logOut) + `\n\nDiffs for this commit:\n` + string(diffOut)
 
+		fmt.Println("Prompt sent to AI:")
+		fmt.Println(prompt)
 		// Higher temperatures seem to maybe create better commit messages
 		// Who knew these were more like poetry than code? :P
 		t := 1.5
@@ -135,10 +139,10 @@ var commitCmd = &cobra.Command{
 		}
 
 		// Clean up message
-		message = strings.TrimSpace(message)
-		if len(message) > 72 {
-			message = message[:72]
-		}
+		// message = strings.TrimSpace(message)
+		// if len(message) > 72 {
+		// 	message = message[:72]
+		// }
 
 		// Add comment explaining how to abort
 		message = message + "\n\n# To abort this commit, delete the commit message and save the file\n" +
