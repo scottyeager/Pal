@@ -102,18 +102,16 @@ var commitCmd = &cobra.Command{
 		systemPrompt := `You are a helpful assistant who generates concise and complete git commit messages based on code changes in diff format. Use the Conventional Commit style.
 
 		Follow these guidelines:
-		- Write a short summary of all changes on the first line
-		- The first line should be 72 characters or less
-		- If more context is needed, continue on additional lines to explain the changes
+		- Write a single line of 72 characters or less
 		- Use imperative mood (e.g. "Fix bug" not "Fixed bug")
 		- Review the diffs carefully and summarize them at a high level
 		- Check for context in the previous commit messages
 
 		Choose one of the following types to begin the message, only add it on the first line:
 
-		feat: New feature
+		feat: New feature (or general code changes that don't fit under another category)
 		fix: Bug fix
-		docs: Documentation
+		docs: Documentation (README files, doc strings, comments, not just any string edits in code)
 		style: Formatting
 		refactor: Code restructuring
 		ci: Continuous integration
@@ -121,15 +119,15 @@ var commitCmd = &cobra.Command{
 		chore: Build/config/tooling
 		perf: Performance improvements
 
+		Most commits will be a "feat" or "fix". Use the others only when you are sure it's a good fit.
+
 		Respond only with the commit message. No explanations, additional formatting, or line breaks, please.`
 
 		prompt := `Recent commit history:\n` + string(logOut) + `\n\nDiffs for this commit:\n` + string(diffOut)
 
-		fmt.Println("Prompt sent to AI:")
-		fmt.Println(prompt)
 		// Higher temperatures seem to maybe create better commit messages
 		// Who knew these were more like poetry than code? :P
-		t := 1.5
+		t := 1.0
 		if cmd.Flags().Changed("temperature") {
 			t = temperature
 		}
