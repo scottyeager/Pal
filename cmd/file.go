@@ -7,6 +7,7 @@ import (
 
 	"github.com/scottyeager/pal/ai"
 	"github.com/scottyeager/pal/config"
+	"github.com/scottyeager/pal/inout"
 	"github.com/spf13/cobra"
 )
 
@@ -15,8 +16,13 @@ var fileCmd = &cobra.Command{
 	Short: "Generate file contents based on a description",
 	Long:  `Generate file contents based on a description. The output is sanitized for direct use.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) == 0 {
-			return fmt.Errorf("please provide a description of the file to generate")
+		stdinInput, err := inout.ReadStdin()
+		if err != nil {
+			return err
+		}
+		
+		if len(args) == 0 && len(stdinInput) == 0 {
+			return fmt.Errorf("please provide a description of the file to generate or pipe in content")
 		}
 
 		cfg, err := config.LoadConfig()
@@ -33,7 +39,17 @@ var fileCmd = &cobra.Command{
 			return fmt.Errorf("error creating AI client: %w", err)
 		}
 
-		description := strings.Join(args, " ")
+		var description string
+		if stdinInput != "" {
+			if len(args) > 0 {
+				description = stdinInput + "\nThat concludes the stdin contents. Now here's the description from the user:\n" + strings.Join(args, " ")
+			} else {
+				description = stdinInput
+			}
+		} else {
+			description = strings.Join(args, " ")
+		}
+
 		system_prompt := "You are a helpful assistant that generates file contents. Provide only the raw file content without any additional commentary, explanations, or markdown formatting. Do not wrap the content in code blocks (```)."
 
 		t := 1.0
