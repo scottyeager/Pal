@@ -14,6 +14,7 @@ import (
 
 func init() {
 	rootCmd.AddCommand(commitCmd)
+	commitCmd.Flags().BoolP("yolo", "y", false, "Automatically commit without editing the message")
 }
 
 var commitCmd = &cobra.Command{
@@ -139,10 +140,20 @@ var commitCmd = &cobra.Command{
 		}
 
 		// Clean up message
-		// message = strings.TrimSpace(message)
-		// if len(message) > 72 {
-		// 	message = message[:72]
-		// }
+		message = strings.TrimSpace(message)
+
+		// Check if yolo mode is enabled
+		yoloMode, _ := cmd.Flags().GetBool("yolo")
+		if yoloMode {
+			// Auto-commit without editor
+			commitCmd := exec.Command("git", "commit", "-m", message)
+			commitCmd.Stdout = os.Stdout
+			commitCmd.Stderr = os.Stderr
+			if err := commitCmd.Run(); err != nil {
+				return fmt.Errorf("commit failed: %w", err)
+			}
+			return nil
+		}
 
 		// Add comment explaining how to abort
 		message = message + "\n\n# To abort this commit, delete the commit message and save the file\n" +
