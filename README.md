@@ -4,7 +4,7 @@
 
 ![demo3 1](https://github.com/user-attachments/assets/e6f4be6e-788e-453e-9f27-2b61b76755aa)
 
-For now, `fish` and `zsh` are fully supported and testing is done on Linux only. MacOS might just work too.
+`fish` and `zsh` are fully supported on Linux and macOS.
 
 Perhaps unsurprisingly, xkcd [has](https://xkcd.com/1168/) elucidated the core situation inspiring this software:
 
@@ -14,7 +14,23 @@ Perhaps unsurprisingly, xkcd [has](https://xkcd.com/1168/) elucidated the core s
 
 ## Quickstart
 
-It's a single binary that you can just download into any location on your `$PATH`:
+It's a single binary that you can download into any location on your `$PATH`:
+
+macOS (Apple Silicon):
+
+```sh
+curl -L https://github.com/scottyeager/Pal/releases/latest/download/pal-darwin-arm64 -o /usr/local/bin/pal
+chmod +x /usr/local/bin/pal
+```
+
+macOS (Intel):
+
+```sh
+curl -L https://github.com/scottyeager/Pal/releases/latest/download/pal-darwin-amd64 -o /usr/local/bin/pal
+chmod +x /usr/local/bin/pal
+```
+
+Linux (x86_64):
 
 ```sh
 wget https://github.com/scottyeager/Pal/releases/latest/download/pal-linux-amd64 -O /usr/local/bin/pal
@@ -58,7 +74,7 @@ For interactive configuration, run:
 
 ```sh
 pal /config
-# Config saved successfully at ~/.config/pal_helper/config.yaml
+# The command will print where your config was saved (varies by OS)
 ```
 
 ## Abbreviations
@@ -71,6 +87,17 @@ pal2 # Etc
 ```
 
 Both `fish` and `zsh` are supported for abbreviations. If you followed the quickstart, abbreviations will be available in every new shell or after sourcing the shell config file. For more info, see [abbreviations](https://github.com/scottyeager/Pal/blob/main/docs/abbreviations.md).
+
+### Paths
+
+`pal` uses standard OS-specific paths:
+
+- Config file:
+  - macOS: `~/Library/Application Support/pal_helper/config.yaml`
+  - Linux: `~/.config/pal_helper/config.yaml`
+- Abbreviations file (stores suggestions for pal1, pal2, ...):
+  - macOS: `~/Library/Application Support/pal_helper/expansions.txt`
+  - Linux: `~/.local/share/pal_helper/expansions.txt`
 
 ## Autocompletion
 

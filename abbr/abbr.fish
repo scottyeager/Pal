@@ -5,7 +5,12 @@ if not set -q pal_prefix
 end
 
 function _pal_get_completion
-    set completions_file ~/.local/share/pal_helper/expansions.txt
+    # Use configured path if provided, otherwise default to XDG path
+    if set -q pal_abbr_file
+        set completions_file $pal_abbr_file
+    else
+        set completions_file ~/.local/share/pal_helper/expansions.txt
+    end
     set suffix (string match -r "$pal_prefix(\d+)" $argv[1] | tail -n1)
 
     # Handle prefix0 specially

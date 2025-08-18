@@ -15,6 +15,8 @@ $ pal3 # Expands to `dir`
 # Multiple lines can also be expanded together, such as with pal123
 ```
 
+Note for zsh users: type the abbreviation (e.g. `pal1`) and press Space to expand. Press Enter afterwards to execute the expanded command.
+
 This eliminates the need to copy and paste command suggestions. The abbreviations will always dynamically expand into the commands suggested by the last bare `pal` command or the equivalent `/cmd` command.
 
 The stored commands that will expand when using the abbreviations can be printed with `/show`:
@@ -68,6 +70,34 @@ Bring this change into open shell sessions by sourcing your config file again:
 ```sh
 source ~/.zshrc
 ```
+
+#### Using abbreviations in zsh
+
+- Type `pal1` then press Space to expand to the first suggestion. Press Enter to run it.
+- Use `pal2`, `pal3`, etc. For multiple lines, `pal123` expands the first three suggestions.
+- Show the stored suggestions at any time with:
+  ```sh
+  pal /show
+  ```
+
+#### Troubleshooting (zsh)
+
+- Enable for the current shell immediately:
+  ```sh
+  source <(pal --zsh)
+  ```
+- Verify Space is bound to the expansion widget:
+  ```sh
+  bindkey ' ' | grep pal-expand-abbr
+  ```
+  If there’s no output, re-run the `source <(pal --zsh)` command above.
+
+#### Paths
+
+The file that stores suggestions (used by `pal1`, `pal2`, …):
+
+- macOS: `~/Library/Application Support/pal_helper/expansions.txt`
+- Linux: `~/.local/share/pal_helper/expansions.txt`
 
 ## Disabling abbreviations
 
