@@ -4,17 +4,34 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
 const commandFileName = "expansions.txt"
 
-func GetStoredCommands() (string, error) {
+// GetAbbrFilePath returns the full path to the abbreviations storage file.
+// On macOS it uses: ~/Library/Application Support/pal_helper/expansions.txt
+// On Linux it uses: ~/.local/share/pal_helper/expansions.txt
+func GetAbbrFilePath() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("failed to get home directory: %w", err)
 	}
-	storagePath := filepath.Join(homeDir, ".local", "share", "pal_helper", commandFileName)
+	var storageDir string
+	if runtime.GOOS == "darwin" {
+		storageDir = filepath.Join(homeDir, "Library", "Application Support", "pal_helper")
+	} else {
+		storageDir = filepath.Join(homeDir, ".local", "share", "pal_helper")
+	}
+	return filepath.Join(storageDir, commandFileName), nil
+}
+
+func GetStoredCommands() (string, error) {
+	storagePath, err := GetAbbrFilePath()
+	if err != nil {
+		return "", err
+	}
 
 	// Ensure directory exists
 	storageDir := filepath.Dir(storagePath)
@@ -41,11 +58,10 @@ func GetStoredCommands() (string, error) {
 }
 
 func StorePrefix0Command(command string) error {
-	homeDir, err := os.UserHomeDir()
+	storagePath, err := GetAbbrFilePath()
 	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
+		return err
 	}
-	storagePath := filepath.Join(homeDir, ".local", "share", "pal_helper", commandFileName)
 
 	// Ensure directory exists
 	storageDir := filepath.Dir(storagePath)
@@ -79,11 +95,10 @@ func StorePrefix0Command(command string) error {
 }
 
 func StoreCommands(completion string) error {
-	homeDir, err := os.UserHomeDir()
+	storagePath, err := GetAbbrFilePath()
 	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
+		return err
 	}
-	storagePath := filepath.Join(homeDir, ".local", "share", "pal_helper", commandFileName)
 
 	// Ensure directory exists
 	storageDir := filepath.Dir(storagePath)
@@ -116,6 +131,7 @@ func StoreCommands(completion string) error {
 
 	// Clean up the old file if it exists. This shouldn't slow us down if the
 	// file no longer exists, since stat hits cached data
+	homeDir, _ := os.UserHomeDir()
 	oldPath := filepath.Join(homeDir, ".local", "share", "pal_helper", "completions.txt")
 	if _, err := os.Stat(oldPath); !os.IsNotExist(err) {
 		// If both exist, remove the old one

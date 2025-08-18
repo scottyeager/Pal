@@ -1,5 +1,5 @@
 # File containing the command lines to expand to
-local PAL_ABBR_FILE=~/.local/share/pal_helper/expansions.txt
+local PAL_ABBR_FILE=${PAL_ABBR_FILE:-~/.local/share/pal_helper/expansions.txt}
 # Default prefix value if not set
 local pal_prefix=${pal_prefix:-pal}
 

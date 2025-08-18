@@ -79,7 +79,13 @@ var updateCmd = &cobra.Command{
 		default:
 			return fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 		}
-		updateCmd := fmt.Sprintf(`wget -q https://github.com/scottyeager/Pal/releases/latest/download/%s -O %s && chmod +x %s`, binaryName, execPath, execPath)
+		// macOS typically doesn't ship with wget, so prefer curl there
+		var updateCmd string
+		if runtime.GOOS == "darwin" {
+			updateCmd = fmt.Sprintf(`curl -fsSL https://github.com/scottyeager/Pal/releases/latest/download/%s -o %s && chmod +x %s`, binaryName, execPath, execPath)
+		} else {
+			updateCmd = fmt.Sprintf(`wget -q https://github.com/scottyeager/Pal/releases/latest/download/%s -O %s && chmod +x %s`, binaryName, execPath, execPath)
+		}
 		err = inout.StorePrefix0Command(updateCmd)
 		if err != nil {
 			return fmt.Errorf("error storing update command: %w", err)
