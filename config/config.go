@@ -19,12 +19,10 @@ type Config struct {
 func GetBasePath() (string, error) {
 	if xdgDataHome := os.Getenv("XDG_DATA_HOME"); xdgDataHome != "" {
 		return filepath.Join(xdgDataHome, "pal_helper"), nil
+	} else if homeDir, err := os.UserHomeDir(); err == nil {
+		return filepath.Join(homeDir, ".config", "pal_helper"), nil
 	}
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(configDir, "pal_helper"), nil
+	return "", fmt.Errorf("unable to determine config directory")
 }
 
 func GetConfigPath() (string, error) {
