@@ -45,6 +45,16 @@ const editSystemPrompt = "You are tasked to edit and generate files containing c
 	"```\n\n" +
 	"The instruction should be written in the first person describing what you're changing. Used to help disambiguate uncertainty in the edit."
 
+const lastEditOutputFileName = "last_edit_response.md"
+
+func getLastEditOutputFilePath() (string, error) {
+	palDataPath, err := config.GetBasePath()
+	if err != nil {
+		return "", fmt.Errorf("failed to get pal data path: %w", err)
+	}
+	return filepath.Join(palDataPath, lastEditOutputFileName), nil
+}
+
 func init() {
 	rootCmd.AddCommand(editCmd)
 }
@@ -131,6 +141,16 @@ The prompt can also be included in the contents of one or more files.`,
 			os.Exit(1)
 		}
 
-		fmt.Println(response)
+		filePath, err := getLastEditOutputFilePath()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error getting last edit output file path: %v\n", err)
+			os.Exit(1)
+		}
+
+		if err := os.WriteFile(filePath, []byte(response), 0644); err != nil {
+			fmt.Fprintf(os.Stderr, "Error writing response to file %s: %v\n", filePath, err)
+			os.Exit(1)
+		}
+		fmt.Printf("AI response written to %s\n", filePath)
 	},
 }

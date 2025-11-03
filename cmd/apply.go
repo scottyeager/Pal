@@ -18,6 +18,7 @@ const applySystemPrompt = "You are a code editing assistant that receives file e
 
 func init() {
 	rootCmd.AddCommand(applyCmd)
+	applyCmd.Flags().BoolP("yolo", "y", false, "Automatically apply edits without confirmation when using previous edit output")
 }
 
 var applyCmd = &cobra.Command{
@@ -34,8 +35,38 @@ Use with the output of the /edit command.`,
 		}
 
 		if stdinInput == "" {
-			fmt.Fprint(os.Stderr, "No input detected. Use with the output of the /edit command.\n")
-			os.Exit(1)
+			yoloMode, _ := cmd.Flags().GetBool("yolo")
+
+			lastEditFilePath, pathErr := getLastEditOutputFilePath()
+			if pathErr != nil {
+				fmt.Fprintf(os.Stderr, "Error getting last edit output file path: %v\n", pathErr)
+				os.Exit(1)
+			}
+
+			lastEditContent, readErr := os.ReadFile(lastEditFilePath)
+			if os.IsNotExist(readErr) {
+				fmt.Fprint(os.Stderr, "No input detected. Use with the output of the /edit command, or run /edit first.\n")
+				os.Exit(1)
+			} else if readErr != nil {
+				fmt.Fprintf(os.Stderr, "Error reading previous edit output from %s: %v\n", lastEditFilePath, readErr)
+				os.Exit(1)
+			}
+
+			fmt.Printf("No stdin input. Found previous edit output in %s.\n", lastEditFilePath)
+			if !yoloMode {
+				fmt.Print("Do you want to apply these edits? (y/N): ")
+				var confirmation string
+				_, scanErr := fmt.Scanln(&confirmation)
+				if scanErr != nil {
+					fmt.Fprint(os.Stderr, "Failed to read confirmation, assuming 'no'. Edit application cancelled.\n")
+					os.Exit(0)
+				}
+				if strings.ToLower(strings.TrimSpace(confirmation)) != "y" {
+					fmt.Fprint(os.Stderr, "Edit application cancelled.\n")
+					os.Exit(0)
+				}
+			}
+			stdinInput = string(lastEditContent)
 		}
 
 		edits, err := parseEdits(stdinInput)
