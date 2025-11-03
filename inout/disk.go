@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/scottyeager/pal/config"
 )
 
 const commandFileName = "expansions.txt"
@@ -79,11 +81,11 @@ func StorePrefix0Command(command string) error {
 }
 
 func StoreCommands(completion string) error {
-	homeDir, err := os.UserHomeDir()
+	basePath, err := config.GetBasePath()
 	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
+		return fmt.Errorf("failed to get base path: %w", err)
 	}
-	storagePath := filepath.Join(homeDir, ".local", "share", "pal_helper", commandFileName)
+	storagePath := filepath.Join(basePath, commandFileName)
 
 	// Ensure directory exists
 	storageDir := filepath.Dir(storagePath)
@@ -114,12 +116,19 @@ func StoreCommands(completion string) error {
 		return fmt.Errorf("failed to write commands to disk: %w", err)
 	}
 
-	// Clean up the old file if it exists. This shouldn't slow us down if the
-	// file no longer exists, since stat hits cached data
-	oldPath := filepath.Join(homeDir, ".local", "share", "pal_helper", "completions.txt")
-	if _, err := os.Stat(oldPath); !os.IsNotExist(err) {
-		// If both exist, remove the old one
-		os.Remove(oldPath)
+	// Previously we stored data in ~/.local/share/pal_helper. Since we
+	// simplified to put everything under .config (or per user's
+	// XDG_CONFIG_HOME), we can remove this folder entirely. This should be fast
+	// enough to run every time without worry but a reasonable TODO might be to
+	// somehow only run this if we detect an update to a new version
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		// If we can't get home dir, skip cleanup
+		return nil
+	}
+	oldDir := filepath.Join(homeDir, ".local", "share", "pal_helper")
+	if _, err := os.Stat(oldDir); !os.IsNotExist(err) {
+		os.RemoveAll(oldDir)
 	}
 
 	return nil

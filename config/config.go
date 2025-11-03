@@ -15,12 +15,23 @@ type Config struct {
 	FormatMarkdown     bool                `yaml:"format_markdown"`
 }
 
-func GetConfigPath() (string, error) {
+func GetBasePath() (string, error) {
+	if xdgDataHome := os.Getenv("XDG_DATA_HOME"); xdgDataHome != "" {
+		return filepath.Join(xdgDataHome, "pal_helper"), nil
+	}
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(configDir, "pal_helper", "config.yaml"), nil
+	return filepath.Join(configDir, "pal_helper"), nil
+}
+
+func GetConfigPath() (string, error) {
+	basePath, err := GetBasePath()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(basePath, "config.yaml"), nil
 }
 
 func LoadConfig() (*Config, error) {
