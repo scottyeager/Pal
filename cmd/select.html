@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>File Selector</title>
+	<style>
+		ul {
+			list-style-type: none;
+		}
+		.caret {
+			cursor: pointer;
+			user-select: none;
+		}
+		.caret::before {
+			content: "\25B6";
+			color: black;
+			display: inline-block;
+			margin-right: 6px;
+		}
+		.caret-down::before {
+			transform: rotate(90deg);
+		}
+		.nested {
+			display: none;
+		}
+		.active {
+			display: block;
+		}
+	</style>
+</head>
+<body>
+	<h1>File Selector</h1>
+	<ul id="file-tree">
+		{{template "file" .}}
+	</ul>
+	<textarea id="selected-files" rows="10" cols="80"></textarea>
+	<button onclick="copySelectedFiles()">Copy</button>
+
+	<script>
+		document.addEventListener("DOMContentLoaded", function() {
+			var toggler = document.getElementsByClassName("caret");
+			var i;
+
+			for (i = 0; i < toggler.length; i++) {
+				toggler[i].addEventListener("click", function() {
+					this.parentElement.querySelector(".nested").classList.toggle("active");
+					this.classList.toggle("caret-down");
+				});
+			}
+
+			var checkboxes = document.querySelectorAll("input[type=checkbox]");
+			var selectedFiles = [];
+
+			for (i = 0; i < checkboxes.length; i++) {
+				checkboxes[i].addEventListener("change", function() {
+					if (this.checked) {
+						selectedFiles.push(this.value);
+					} else {
+						var index = selectedFiles.indexOf(this.value);
+						if (index > -1) {
+							selectedFiles.splice(index, 1);
+						}
+					}
+					document.getElementById("selected-files").value = selectedFiles.join(" ");
+				});
+			}
+		});
+
+		function copySelectedFiles() {
+			var selectedFiles = document.getElementById("selected-files");
+			selectedFiles.select();
+			document.execCommand("copy");
+		}
+	</script>
+
+	{{define "file"}}
+		<li>
+			{{if .Children}}
+				<span class="caret">{{.Name}}</span>
+				<ul class="nested">
+					{{range .Children}}
+						{{template "file" .}}
+					{{end}}
+				</ul>
+			{{else}}
+				<input type="checkbox" value="{{.Path}}"> {{.Name}}
+			{{end}}
+		</li>
+	{{end}}
+</body>
+</html>
