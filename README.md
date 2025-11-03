@@ -39,6 +39,15 @@ More information about these features and how to install them individually can b
 
 ## Config
 
+Note that `pal` will store some files on your computer in the following location:
+
+1. If `XDG_CONFIG_HOME` is set, then: `$XDG_CONFIG_HOME/pal_helper`
+2. Otherwise: `~/.config/pal_helper`
+
+> See "Config path philosophy" if you have questions about this
+
+### LLM Provider config
+
 You will need to provide an API key for an LLM provider. Several providers listed below have a free tier.
 
 The free tiers sometimes require that you agree to collection and use of the data you submit. Those providers also have paid plans without the data collection requirement. See the links for details.
@@ -53,6 +62,8 @@ Supported providers:
 * [Google](https://ai.google.dev/) (free with [data collection](https://ai.google.dev/gemini-api/terms#unpaid-services))
 * [OpenWebUI](openwebui.com) (self hosted models via Ollama, see [guide](https://github.com/scottyeager/Pal/blob/main/docs/openwebui.md))
 * Any OpenAI API compatible provider (via manual config)
+
+### Interactive config
 
 For interactive configuration, run:
 
@@ -237,24 +248,11 @@ Without a slash command specified, `pal` will ignore the temperature flag and it
 
 ## Which models to use?
 
-The command completion function of `pal` works well with the latest generation of flagship models:
+> I tried being more specific about this in the past, but things move fast in this space so I will try to give some general info instead.
 
-* `deepseek-chat` (v3)
-* `claude-3-5-sonnet-latest`
-* `gpt-4o`
+The command completion function of `pal` works well with pretty much any reasonably intelligent model. Since very few tokens are outputted, this mode tends to be very inexpensive, even with more expensive models.
 
-It also works fairly well with less expensive "mini" models:
-
-* `claude-3-5-haiku-latest`
-* `gpt-4o-mini`
-
-These might have trouble with some more complex commands though, and the token requirements of command suggestion with `pal` are generally so low that the cost savings might be hard to notice.
-
-If you use the Hugging Face API, then the best choice seems to be `deepseek-ai/DeepSeek-R1-Distill-Qwen-32B` but it can be rather slow.
-
-When it comes to `/ask` mode, the experience will be on par with a regular chat bot conversation. So the flagship models are a good choice and the reasoning models (`o1` and `deepseek-reasoner`) can be handy for more difficult queries.
-
-The reasoning models might be a good choice for especially difficult command suggestion requests too, but so far I didn't find many cases to reach for them.
+One point to consider is that fast responses are very nice when you are just trying to get something done and need the right command form. Choosing models that are fast but not the most intelligent is probably a good trade off to make.
 
 ## Why?
 
@@ -264,4 +262,14 @@ One category of in shell assistants drop you into a whole new shell enviroment. 
 
 Another category leans a bit more toward a TUI, showing a menu of results on the screen to choose from, for example. The experince I desire is closer to a classic shell utility—like an `ls` that lists ideas for the next command to run, instead of listing files.
 
-Finally, who can miss the chance to build something with the incredibly good and cheap DeepSeek API? Times are a changing, so let's have some fun with it :)
+Finally, I was so inspired when I saw how good and cheap DeepSeek v3 was that I just had to build something with it. Times are a changing, so let's have some fun :)
+
+## Config path philosophy
+
+First of all, I don't like apps cluttering my home directory with a `.app` folder to hold their config and files. So that's out.
+
+On Linux, using `~/.config` and `XDG_CONFIG_HOME` is well accepted, for config files. Then we also have `~/.local/share`, etc. After initially dabbling in a more complicated arrangement using multiple dirs, I'm putting everything under config now to keep things simple.
+
+A good bit of ink has been spilled about where CLI apps on MacOS ought to store their config files. I find the arguments for `~/.app` and `~/.config/app` to be compelling.
+
+When it comes to the question of XDG and MacOS, my approach is pragmatic. If XDG shouldn't be used on MacOS for some reason, then I'd have to choose a different environment variable name to serve the same purpose. In the interest of simplicity, `XDG_CONFIG_HOME` is just what `pal` uses on all platforms.
