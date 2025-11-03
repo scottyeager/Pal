@@ -48,19 +48,34 @@
 			}
 
 			var checkboxes = document.querySelectorAll("input[type=checkbox]");
-			var selectedFiles = [];
+			
+			function updateSelectedFiles() {
+				var selectedFiles = [];
+				var checkedCheckboxes = document.querySelectorAll("input[type=checkbox]:checked");
+				for (var i = 0; i < checkedCheckboxes.length; i++) {
+					selectedFiles.push(checkedCheckboxes[i].value);
+				}
+				document.getElementById("selected-files").value = selectedFiles.join(" ");
+			}
 
 			for (i = 0; i < checkboxes.length; i++) {
 				checkboxes[i].addEventListener("change", function() {
-					if (this.checked) {
-						selectedFiles.push(this.value);
-					} else {
-						var index = selectedFiles.indexOf(this.value);
-						if (index > -1) {
-							selectedFiles.splice(index, 1);
+					var childCheckboxes = this.parentElement.querySelectorAll("ul input[type=checkbox]");
+					for (var j = 0; j < childCheckboxes.length; j++) {
+						childCheckboxes[j].checked = this.checked;
+					}
+
+					if (!this.checked) {
+						var parentNode = this.parentElement.parentElement.parentElement;
+						while (parentNode && parentNode.tagName === 'LI') {
+							var parentCheckbox = parentNode.querySelector("input[type=checkbox]");
+							if (parentCheckbox) {
+								parentCheckbox.checked = false;
+							}
+							parentNode = parentNode.parentElement.parentElement;
 						}
 					}
-					document.getElementById("selected-files").value = selectedFiles.join(" ");
+					updateSelectedFiles();
 				});
 			}
 		});
@@ -74,6 +89,7 @@
 
 	{{define "file"}}
 		<li>
+			<input type="checkbox" value="{{.Path}}">
 			{{if .Children}}
 				<span class="caret">{{.Name}}</span>
 				<ul class="nested">
@@ -82,7 +98,7 @@
 					{{end}}
 				</ul>
 			{{else}}
-				<input type="checkbox" value="{{.Path}}"> {{.Name}}
+				{{.Name}}
 			{{end}}
 		</li>
 	{{end}}
