@@ -57,6 +57,7 @@ func getLastEditOutputFilePath() (string, error) {
 
 func init() {
 	rootCmd.AddCommand(editCmd)
+	editCmd.Flags().BoolP("yolo", "y", false, "Automatically apply edits without confirmation")
 }
 
 var editCmd = &cobra.Command{
@@ -141,16 +142,43 @@ The prompt can also be included in the contents of one or more files.`,
 			os.Exit(1)
 		}
 
-		filePath, err := getLastEditOutputFilePath()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting last edit output file path: %v\n", err)
-			os.Exit(1)
-		}
+		yoloMode, _ := cmd.Flags().GetBool("yolo")
 
-		if err := os.WriteFile(filePath, []byte(response), 0644); err != nil {
-			fmt.Fprintf(os.Stderr, "Error writing response to file %s: %v\n", filePath, err)
-			os.Exit(1)
+		if yoloMode {
+			edits, parseErr := parseEdits(response)
+			if parseErr != nil {
+				fmt.Fprintf(os.Stderr, "Error parsing edits for yolo mode: %v\n", parseErr)
+				os.Exit(1)
+			}
+
+			if len(edits) == 0 {
+				fmt.Fprint(os.Stderr, "No valid edits found in AI response for yolo mode.\n")
+				os.Exit(1)
+			}
+
+			appliedCount := 0
+			for _, edit := range edits {
+				err := applyEdit(client, edit)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error applying edit to %s in yolo mode: %v\n", edit.FilePath, err)
+					continue
+				}
+				appliedCount++
+				fmt.Printf("Applied edit to %s\n", edit.FilePath)
+			}
+			fmt.Printf("Successfully applied %d edit(s) in yolo mode.\n", appliedCount)
+		} else {
+			filePath, err := getLastEditOutputFilePath()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error getting last edit output file path: %v\n", err)
+				os.Exit(1)
+			}
+
+			if err := os.WriteFile(filePath, []byte(response), 0644); err != nil {
+				fmt.Fprintf(os.Stderr, "Error writing response to file %s: %v\n", filePath, err)
+				os.Exit(1)
+			}
+			fmt.Println(response)
 		}
-		fmt.Println(response)
 	},
 }
