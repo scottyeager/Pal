@@ -12,6 +12,7 @@ type Config struct {
 	AbbreviationPrefix string              `yaml:"abbreviation_prefix"`
 	Providers          map[string]Provider `yaml:"providers"`
 	SelectedModel      string              `yaml:"selected_model"`
+	SelectedModels     map[string]string   `yaml:"selected_models"`
 	FormatMarkdown     bool                `yaml:"format_markdown"`
 }
 
@@ -93,26 +94,56 @@ func CheckConfiguration(cfg *Config) error {
 	if len(cfg.Providers) == 0 {
 		return fmt.Errorf("No providers configured. Run 'pal /config' to set up a provider")
 	}
-	if cfg.SelectedModel == "" {
+	if cfg.SelectedModel == "" && len(cfg.SelectedModels) == 0 {
 		return fmt.Errorf("No model selected. Run 'pal /models' to select a model")
 	}
 
-	modelFound := false
-	for provider_name, provider := range cfg.Providers {
-		for _, model := range provider.Models {
-			if provider_name+"/"+model == cfg.SelectedModel {
-				modelFound = true
+	// Check default model
+	if cfg.SelectedModel != "" {
+		modelFound := false
+		for provider_name, provider := range cfg.Providers {
+			for _, model := range provider.Models {
+				if provider_name+"/"+model == cfg.SelectedModel {
+					modelFound = true
+					break
+				}
+			}
+			if modelFound {
 				break
 			}
 		}
-		if modelFound {
-			break
+		if !modelFound {
+			return fmt.Errorf("Selected model '%s' not found in current configuration. Run 'pal /models' to select a valid model", cfg.SelectedModel)
 		}
 	}
 
-	if !modelFound {
-		return fmt.Errorf("Selected model '%s' not found in current configuration. Run 'pal /models' to select a valid model", cfg.SelectedModel)
+	// Check every model in SelectedModels map
+	for key, selectedModel := range cfg.SelectedModels {
+		modelFound := false
+		for provider_name, provider := range cfg.Providers {
+			for _, model := range provider.Models {
+				if provider_name+"/"+model == selectedModel {
+					modelFound = true
+					break
+				}
+			}
+			if modelFound {
+				break
+			}
+		}
+		if !modelFound {
+			return fmt.Errorf("Selected model '%s' for key '%s' not found in current configuration. Run 'pal /models' to select a valid model", selectedModel, key)
+		}
 	}
 
 	return nil
+}
+
+func GetSelectedModel(cfg *Config, key string) string {
+	if len(cfg.SelectedModels) > 0 {
+		if val, ok := cfg.SelectedModels[key]; ok {
+			return val
+		}
+	}
+	return cfg.SelectedModel
 }
