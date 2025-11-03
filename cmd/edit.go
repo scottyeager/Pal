@@ -151,6 +151,6 @@ The prompt can also be included in the contents of one or more files.`,
 			fmt.Fprintf(os.Stderr, "Error writing response to file %s: %v\n", filePath, err)
 			os.Exit(1)
 		}
-		fmt.Printf("AI response written to %s\n", filePath)
+		fmt.Println(response)
 	},
 }
