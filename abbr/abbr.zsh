@@ -1,5 +1,11 @@
 # File containing the command lines to expand to
-local PAL_ABBR_FILE=~/.local/share/pal_helper/expansions.txt
+# Use XDG_DATA_HOME or fallback to ~/.config
+if [[ -n $XDG_DATA_HOME ]]; then
+    local PAL_ABBR_FILE="$XDG_DATA_HOME/pal_helper/expansions.txt"
+else
+    local PAL_ABBR_FILE="$HOME/.config/pal_helper/expansions.txt"
+fi
+
 # Default prefix value if not set
 local pal_prefix=${pal_prefix:-pal}
 

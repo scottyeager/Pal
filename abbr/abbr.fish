@@ -5,7 +5,15 @@ if not set -q pal_prefix
 end
 
 function _pal_get_completion
-    set completions_file ~/.local/share/pal_helper/expansions.txt
+    # Use XDG_DATA_HOME or fallback to ~/.config
+    set -l config_dir
+    if test -n "$XDG_DATA_HOME"
+        set config_dir "$XDG_DATA_HOME/pal_helper"
+    else
+        set config_dir "$HOME/.config/pal_helper"
+    end
+    set completions_file $config_dir/expansions.txt
+
     set suffix (string match -r "$pal_prefix(\d+)" $argv[1] | tail -n1)
 
     # Handle prefix0 specially
