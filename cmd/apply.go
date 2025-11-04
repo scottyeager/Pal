@@ -27,11 +27,10 @@ var applyCmd = &cobra.Command{
 	Long: `Apply edits to files.
 Reads edit instructions from stdin and applies them to the specified files.
 Use with the output of the /edit command.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		stdinInput, err := inout.ReadStdin()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error reading stdin: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("error reading stdin: %v", err)
 		}
 
 		if stdinInput == "" {
@@ -39,17 +38,14 @@ Use with the output of the /edit command.`,
 
 			lastEditFilePath, pathErr := getLastEditOutputFilePath()
 			if pathErr != nil {
-				fmt.Fprintf(os.Stderr, "Error getting last edit output file path: %v\n", pathErr)
-				os.Exit(1)
+				return fmt.Errorf("error getting last edit output file path: %v", pathErr)
 			}
 
 			lastEditContent, readErr := os.ReadFile(lastEditFilePath)
 			if os.IsNotExist(readErr) {
-				fmt.Fprint(os.Stderr, "No input detected. Use with the output of the /edit command, or run /edit first.\n")
-				os.Exit(1)
+				return fmt.Errorf("no input detected. Use with the output of the /edit command, or run /edit first")
 			} else if readErr != nil {
-				fmt.Fprintf(os.Stderr, "Error reading previous edit output from %s: %v\n", lastEditFilePath, readErr)
-				os.Exit(1)
+				return fmt.Errorf("error reading previous edit output from %s: %v", lastEditFilePath, readErr)
 			}
 
 			fmt.Printf("No stdin input. Found previous edit output in %s.\n", lastEditFilePath)
@@ -59,11 +55,11 @@ Use with the output of the /edit command.`,
 				_, scanErr := fmt.Scanln(&confirmation)
 				if scanErr != nil {
 					fmt.Fprint(os.Stderr, "Failed to read confirmation, assuming 'no'. Edit application cancelled.\n")
-					os.Exit(0)
+					return nil
 				}
 				if strings.ToLower(strings.TrimSpace(confirmation)) != "y" {
 					fmt.Fprint(os.Stderr, "Edit application cancelled.\n")
-					os.Exit(0)
+					return nil
 				}
 			}
 			stdinInput = string(lastEditContent)
@@ -71,13 +67,11 @@ Use with the output of the /edit command.`,
 
 		edits, err := parseEdits(stdinInput)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing edits: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("error parsing edits: %v", err)
 		}
 
 		if len(edits) == 0 {
-			fmt.Fprint(os.Stderr, "No valid edits found in input.\n")
-			os.Exit(1)
+			return fmt.Errorf("no valid edits found in input")
 		}
 
 		cfg := config.LoadConfigOrExit()
@@ -86,8 +80,7 @@ Use with the output of the /edit command.`,
 		applyModel := config.GetSelectedModel(cfg, "apply")
 		client, err := ai.NewClient(cfg, applyModel)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating AI client: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("error creating AI client: %v", err)
 		}
 
 		appliedCount := 0
@@ -102,6 +95,7 @@ Use with the output of the /edit command.`,
 		}
 
 		fmt.Printf("Successfully applied %d edit(s)\n", appliedCount)
+		return nil
 	},
 }
 
