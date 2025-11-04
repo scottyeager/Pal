@@ -30,7 +30,9 @@ var commitCmd = &cobra.Command{
 			return err
 		}
 
-		aiClient, err := ai.NewClient(cfg)
+		commitModel := config.GetSelectedModel(cfg, "commit")
+
+		aiClient, err := ai.NewClient(cfg, commitModel)
 		if err != nil {
 			return fmt.Errorf("error creating AI client: %w", err)
 		}
@@ -132,7 +134,7 @@ var commitCmd = &cobra.Command{
 			t = temperature
 		}
 
-		message, err := aiClient.GetCompletion(context.Background(), systemPrompt, prompt, false, t, false)
+		message, err := aiClient.GetCompletion(context.Background(), systemPrompt, prompt, false, t, false, commitModel)
 		if err != nil {
 			return fmt.Errorf("failed to generate commit message: %w", err)
 		}

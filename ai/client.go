@@ -9,29 +9,29 @@ import (
 
 	anthropic "github.com/anthropics/anthropic-sdk-go"
 	anthropicOption "github.com/anthropics/anthropic-sdk-go/option"
-	openai "github.com/openai/openai-go"
-	openaiOption "github.com/openai/openai-go/option"
+	openai "github.com/openai/openai-go/v3"
+	openaiOption "github.com/openai/openai-go/v3/option"
 	"github.com/scottyeager/pal/config"
 	"github.com/scottyeager/pal/inout"
 )
 
 type Client struct {
-	openaiClient    *openai.Client
+	openaiClient    openai.Client
 	anthropicClient *anthropic.Client
 	provider        config.Provider
 	model           string
 	providerName    string
 }
 
-func NewClient(cfg *config.Config) (*Client, error) {
-	parts := strings.SplitN(cfg.SelectedModel, "/", 2)
+func NewClient(cfg *config.Config, modelName string) (*Client, error) {
+	parts := strings.SplitN(modelName, "/", 2)
 	if len(parts) < 2 {
-		return nil, fmt.Errorf("Model name %s isn't valid. Please use /models or /model to select a valid model.", cfg.SelectedModel)
+		return nil, fmt.Errorf("Model name %s isn't valid. Please use /models or /model to select a valid model.", modelName)
 	}
 	providerName, model := parts[0], parts[1]
 	provider := cfg.Providers[providerName]
 
-	var openaiClient *openai.Client
+	var openaiClient openai.Client
 	var anthropicClient *anthropic.Client
 
 	switch providerName {
@@ -56,14 +56,14 @@ func NewClient(cfg *config.Config) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt string, storeCommands bool, temperature float64, formatMarkdown bool) (string, error) {
+func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt string, storeCommands bool, temperature float64, formatMarkdown bool, model string) (string, error) {
 	var completion string
 	var err error
 
 	if c.providerName == "anthropic" {
 		message, err := c.anthropicClient.Messages.New(ctx, anthropic.MessageNewParams{
 			Model:     anthropic.F(c.model),
-			MaxTokens: anthropic.F(int64(1024)),
+			MaxTokens: anthropic.F(int64(4096)),
 			System: anthropic.F([]anthropic.TextBlockParam{
 				anthropic.NewTextBlock(system_prompt),
 			}),
@@ -73,7 +73,7 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 			Temperature: anthropic.F(temperature),
 		})
 		if err != nil {
-			return "", fmt.Errorf("failed to get completion: %w", err)
+			return "", fmt.Errorf("failed to get completion from anthropic: %w", err)
 		}
 
 		// Extract text content from message
@@ -84,15 +84,17 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 		}
 	} else {
 		resp, err := c.openaiClient.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-			Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
+			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.SystemMessage(system_prompt),
 				openai.UserMessage(prompt),
-			}),
-			Model:       openai.F(c.model),
-			Temperature: openai.F(temperature),
+			},
+			Model:       c.model,
+			Temperature: openai.Float(temperature),
+			MaxTokens:   openai.Int(4096),
 		})
+
 		if err != nil {
-			return "", fmt.Errorf("failed to get completion: %w", err)
+			return "", fmt.Errorf("failed to get completion from %s: %w", c.providerName, err)
 		}
 
 		if len(resp.Choices) == 0 {
@@ -102,12 +104,13 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 		completion = resp.Choices[0].Message.Content
 	}
 
-	// Remove <think> block if present
-	if thinkStart := strings.Index(completion, "<think>"); thinkStart != -1 {
-		if thinkEnd := strings.Index(completion, "</think>"); thinkEnd != -1 {
-			completion = completion[:thinkStart] + strings.TrimSpace(completion[thinkEnd+len("</think>"):])
+	// Remove <tool_call> block if present
+	if thinkStart := strings.Index(completion, "<tool_call>"); thinkStart != -1 {
+		if thinkEnd := strings.Index(completion[thinkStart:], "</tool_call>"); thinkEnd != -1 {
+			completion = completion[:thinkStart] + strings.TrimSpace(completion[thinkStart+thinkEnd+len("</tool_call>"):])
 		}
 	}
+
 	if storeCommands {
 		// Store the completion
 		err = inout.StoreCommands(completion)

@@ -26,9 +26,11 @@ var askCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
 		if len(userMessage) == 0 && len(stdinInput) == 0 {
 			return fmt.Errorf("No input detected. Please write or pipe in a query")
 		}
+
 		cfg, err := config.LoadConfig()
 		if err != nil {
 			return fmt.Errorf("error loading config: %w", err)
@@ -38,7 +40,9 @@ var askCmd = &cobra.Command{
 			return err
 		}
 
-		aiClient, err := ai.NewClient(cfg)
+		askModel := config.GetSelectedModel(cfg, "ask")
+
+		aiClient, err := ai.NewClient(cfg, askModel)
 		if err != nil {
 			return fmt.Errorf("error creating AI client: %w", err)
 		}
@@ -67,7 +71,8 @@ var askCmd = &cobra.Command{
 		if cmd.Flags().Changed("temperature") {
 			t = temperature
 		}
-		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, false, t, formatMarkdown)
+
+		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, false, t, formatMarkdown, askModel)
 		if err != nil {
 			return fmt.Errorf("error getting completion: %w", err)
 		}

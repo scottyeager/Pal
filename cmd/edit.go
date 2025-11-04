@@ -14,12 +14,6 @@ import (
 
 const editSystemPrompt = "You are tasked to edit and generate files containing code, documentation, and possibly other content. Please remember your goal is to complete the task with the minimum output necessary to avoid ambiguity.\n\n" +
 	"You will receive instructions from the user and optionally the contents of some files. Some files might contain prompts or further instructions (generally these should not be edited unless specifically requested by the users). Respond to the user instructions by providing the necessary edits and generating new files as required.\n\n" +
-	"File contents are provided in the following format:\n\n" +
-	"<file_contents>\nFile: /path/to/file.md\n" +
-	"```markdown\n" +
-	"These are the example file contents.\n" +
-	"```\n" +
-	"</file_contents>\n\n" +
 	"Use the following approach to make edits to existing files by outputting code edits in a specific markdown format. You can use the same approach to create new files too, as needed.\n\n" +
 	"This will be read by a less intelligent model, which will quickly apply the edit. You should make it clear what the edit is, while also minimizing the unchanged code you write.\n" +
 	"When writing the edit, you should specify each edit in sequence, with the special comment // ... existing code ... to represent unchanged code in between edited lines.\n\n" +
@@ -66,10 +60,10 @@ var editCmd = &cobra.Command{
 	Long: `Edit files or groups of files.
 Accepts a list of file and folder names along with an optional prompt.
 The prompt can also be included in the contents of one or more files.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			cmd.Help()
-			return
+			return nil
 		}
 
 		var filePaths []string
@@ -117,26 +111,35 @@ The prompt can also be included in the contents of one or more files.`,
 				fmt.Fprintf(os.Stderr, "Error reading file %s: %v\n", file, err)
 				continue
 			}
-			lang := strings.TrimPrefix(filepath.Ext(file), ".")
 
-			formattedFilesContent.WriteString("<file_contents>\n")
-			formattedFilesContent.WriteString(fmt.Sprintf("File: %s\n", file))
-			formattedFilesContent.WriteString(fmt.Sprintf("```%s\n", lang))
+			// fileType := filepath.Ext(file)[1:]
+
+			// formattedFilesContent.WriteString(fmt.Sprintf("```%s filepath=%s\n", fileType, file))
+			formattedFilesContent.WriteString(fmt.Sprintf("```filepath=%s\n", file))
 			formattedFilesContent.WriteString(string(content))
 			formattedFilesContent.WriteString("\n```\n")
-			formattedFilesContent.WriteString("</file_contents>\n\n")
 		}
 
 		finalPrompt := formattedFilesContent.String() + userPrompt
 
-		cfg := config.LoadConfigOrExit()
-		client, err := ai.NewClient(cfg)
+		cfg, err := config.LoadConfig()
+		if err != nil {
+			return fmt.Errorf("error loading config: %w", err)
+		}
+
+		if err := config.CheckConfiguration(cfg); err != nil {
+			return err
+		}
+
+		editModel := config.GetSelectedModel(cfg, "edit")
+
+		client, err := ai.NewClient(cfg, editModel)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating AI client: %v\n", err)
 			os.Exit(1)
 		}
 
-		response, err := client.GetCompletion(context.Background(), editSystemPrompt, finalPrompt, false, 1.0, false)
+		response, err := client.GetCompletion(context.Background(), editSystemPrompt, finalPrompt, false, 1.0, false, editModel)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting completion: %v\n", err)
 			os.Exit(1)
@@ -145,6 +148,9 @@ The prompt can also be included in the contents of one or more files.`,
 		yoloMode, _ := cmd.Flags().GetBool("yolo")
 
 		if yoloMode {
+			// Get model for apply command
+			applyModel := config.GetSelectedModel(cfg, "apply")
+
 			edits, parseErr := parseEdits(response)
 			if parseErr != nil {
 				fmt.Fprintf(os.Stderr, "Error parsing edits for yolo mode: %v\n", parseErr)
@@ -158,7 +164,7 @@ The prompt can also be included in the contents of one or more files.`,
 
 			appliedCount := 0
 			for _, edit := range edits {
-				err := applyEdit(client, edit)
+				err := applyEdit(client, edit, applyModel)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error applying edit to %s in yolo mode: %v\n", edit.FilePath, err)
 					continue
@@ -180,5 +186,6 @@ The prompt can also be included in the contents of one or more files.`,
 			}
 			fmt.Println(response)
 		}
+		return nil
 	},
 }

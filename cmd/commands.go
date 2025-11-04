@@ -54,7 +54,10 @@ func Commands(cmd cobra.Command, query []string) error {
 		return err
 	}
 
-	aiClient, err := ai.NewClient(cfg)
+	// Get model for cmd command
+	cmdModel := config.GetSelectedModel(cfg, "cmd")
+
+	aiClient, err := ai.NewClient(cfg, cmdModel)
 	if err != nil {
 		return fmt.Errorf("error creating AI client: %v", err)
 	}
@@ -65,7 +68,7 @@ func Commands(cmd cobra.Command, query []string) error {
 	if cmd.Flags().Changed("temperature") {
 		t = temperature
 	}
-	response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, true, t, false)
+	response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, true, t, false, cmdModel)
 	if err != nil {
 		return fmt.Errorf("error getting completion: %v", err)
 	}

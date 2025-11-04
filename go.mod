@@ -1,11 +1,11 @@
 module github.com/scottyeager/pal
 
-go 1.21
+go 1.22
 
 require (
 	github.com/anthropics/anthropic-sdk-go v0.2.0-alpha.10
 	github.com/charmbracelet/glamour v0.8.0
-	github.com/openai/openai-go v0.1.0-alpha.59
+	github.com/openai/openai-go/v3 v3.8.0
 	github.com/spf13/cobra v1.9.0
 	gopkg.in/yaml.v3 v3.0.1
 )

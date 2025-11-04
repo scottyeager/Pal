@@ -81,7 +81,10 @@ Use with the output of the /edit command.`,
 		}
 
 		cfg := config.LoadConfigOrExit()
-		client, err := ai.NewClient(cfg)
+
+		// Get model for apply command
+		applyModel := config.GetSelectedModel(cfg, "apply")
+		client, err := ai.NewClient(cfg, applyModel)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating AI client: %v\n", err)
 			os.Exit(1)
@@ -89,7 +92,7 @@ Use with the output of the /edit command.`,
 
 		appliedCount := 0
 		for _, edit := range edits {
-			err := applyEdit(client, edit)
+			err := applyEdit(client, edit, applyModel)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error applying edit to %s: %v\n", edit.FilePath, err)
 				continue
@@ -164,7 +167,7 @@ func parseEdits(input string) ([]Edit, error) {
 	return edits, nil
 }
 
-func applyEdit(client *ai.Client, edit Edit) error {
+func applyEdit(client *ai.Client, edit Edit, model string) error {
 	// Read the original file content
 	originalContent, err := os.ReadFile(edit.FilePath)
 	if err != nil {
@@ -179,7 +182,7 @@ func applyEdit(client *ai.Client, edit Edit) error {
 	)
 
 	// Get the completion from the AI
-	response, err := client.GetCompletion(context.Background(), applySystemPrompt, applyPrompt, false, 0.0, false)
+	response, err := client.GetCompletion(context.Background(), applySystemPrompt, applyPrompt, false, 0.0, false, model)
 	if err != nil {
 		return fmt.Errorf("failed to get completion: %w", err)
 	}

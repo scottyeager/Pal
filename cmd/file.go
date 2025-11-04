@@ -20,7 +20,7 @@ var fileCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		
+
 		if len(args) == 0 && len(stdinInput) == 0 {
 			return fmt.Errorf("please provide a description of the file to generate or pipe in content")
 		}
@@ -34,7 +34,9 @@ var fileCmd = &cobra.Command{
 			return err
 		}
 
-		aiClient, err := ai.NewClient(cfg)
+		fileModel := config.GetSelectedModel(cfg, "file")
+		aiClient, err := ai.NewClient(cfg, fileModel)
+
 		if err != nil {
 			return fmt.Errorf("error creating AI client: %w", err)
 		}
@@ -57,7 +59,7 @@ var fileCmd = &cobra.Command{
 			t = temperature
 		}
 
-		response, err := aiClient.GetCompletion(context.Background(), system_prompt, description, false, t, false)
+		response, err := aiClient.GetCompletion(context.Background(), system_prompt, description, false, t, false, fileModel)
 		if err != nil {
 			return fmt.Errorf("error getting completion: %w", err)
 		}
