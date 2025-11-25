@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -94,6 +95,10 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 		})
 
 		if err != nil {
+			var apierr *openai.Error
+			if errors.As(err, &apierr) {
+				return "", fmt.Errorf("failed to get completion from %s: %w\n%s\n", c.providerName, err, apierr.Response.Body)
+			}
 			return "", fmt.Errorf("failed to get completion from %s: %w", c.providerName, err)
 		}
 
