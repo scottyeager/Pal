@@ -73,16 +73,6 @@ func Commands(cmd cobra.Command, query []string) error {
 		return fmt.Errorf("error getting completion: %v", err)
 	}
 
-	// Remove any blank lines (weaker models tend to return them)
-	lines := strings.Split(response, "\n")
-	var nonEmptyLines []string
-	for _, line := range lines {
-		if len(strings.TrimSpace(line)) > 0 {
-			nonEmptyLines = append(nonEmptyLines, line)
-		}
-	}
-	response = strings.Join(nonEmptyLines, "\n")
-
 	fmt.Println(response)
 	return nil
 }

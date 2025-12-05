@@ -117,6 +117,16 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 	}
 
 	if storeCommands {
+		// Remove any blank lines from completion
+		lines := strings.Split(completion, "\n")
+		var nonEmptyLines []string
+		for _, line := range lines {
+			if len(strings.TrimSpace(line)) > 0 {
+				nonEmptyLines = append(nonEmptyLines, line)
+			}
+		}
+		completion = strings.Join(nonEmptyLines, "\n")
+
 		// Store the completion
 		err = inout.StoreCommands(completion)
 		if err != nil {
