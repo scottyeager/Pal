@@ -16,24 +16,38 @@ Perhaps unsurprisingly, xkcd [has](https://xkcd.com/1168/) elucidated the core s
 
 It's a single binary that you can just download into any location on your `$PATH`:
 
+### Linux (x64)
+
 ```sh
 wget https://github.com/scottyeager/Pal/releases/latest/download/pal-linux-amd64 -O /usr/local/bin/pal
 chmod +x /usr/local/bin/pal
 ```
 
-If the command name `pal` is already taken on your system, feel free to give it a name of your choice.
+### MacOS (ARM)
+
+```sh
+wget https://github.com/scottyeager/Pal/releases/latest/download/pal-darwin-arm64 -O /usr/local/bin/pal
+chmod +x /usr/local/bin/pal
+```
+
+> If you have an ARM64 based Linux machine or an Intel Mac, see the [releases](https://github.com/scottyeager/Pal/releases) page to find your binary link.
 
 To conveniently install autocompletions and the abbreviation feature:
+
+### Fish
 
 ```sh
 # fish
 pal --fish-config >> ~/.config/fish/config.fish
+```
+### Zsh
 
+```sh
 # zsh (autocomplete is an optional feature in zsh--see details below)
 pal --zsh-config >> ~/.zshrc
-
-# Start a new shell or source your config file from an existing shell
 ```
+
+Start a new shell or source your config file from an existing shell to activate the features.
 
 More information about these features and how to install them individually can be found at the relevent docs pages: autocompletion and [abbreviations](https://github.com/scottyeager/Pal/blob/main/docs/abbreviations.md).
 
@@ -87,7 +101,6 @@ Both `fish` and `zsh` are supported for abbreviations. If you followed the quick
 
 Since `pal` is built with [Cobra](https://github.com/spf13/cobra), it's able to generate autocompletions for a variety of shells automatically. Currently only the `fish` and `zsh` completions are exposed.
 
-
 If you followed the quickstart, then you've already installed the autocompletions. These instructions are for installing the autocompletions separately from the abbreviations feature.
 
 ### Fish
@@ -113,7 +126,11 @@ source <(pal --zsh-completion)
 
 ## Usage
 
-The basic usage pattern is to write `pal` and then describe or ask about the command you need:
+Pal provides a few commands for working with LLMs in your shell.
+
+### Command suggestions
+
+The default `pal` mode accepts a task description or question about how to accomplish something with the shell:
 
 ```text
 pal Set a static IP for eth0
@@ -136,6 +153,22 @@ Sometimes a refusal message might be shown if the model can't or won't provide a
 ```sh
 pal /ask Why is the sky blue
 ```
+
+### Git commit
+
+The `/commit` command is used to stage changes in Git repos and automatically generate commit messages:
+
+```
+pal /commit
+```
+
+It works like this:
+
+1. Any modified files are `git add`ed (new files must be added manually)
+2. Diffs for the current commit and ten previous commit messages for context are sent to the LLM
+3. The suggested commit message is opened for review and editing if needed
+
+It's possible to abort the commit by deleting the message and saving before exiting the editor.
 
 ### Special characters
 
@@ -209,22 +242,6 @@ With no argument `/model` prints the currently selected model.
 
 For providers added through interactive config, a default set of models will be included. Depending on the provider, additional models may be available that could be added by editing the config file directly. You can also remove models you don't use so they won't show up in model selection list.
 
-### Git commit
-
-The `/commit` command is used to stage changes in Git repos and automatically generate commit messages:
-
-```
-pal /commit
-```
-
-It works like this:
-
-1. Any modified files are `git add`ed (new files must be added manually)
-2. Diffs for the current commit and ten previous commit messages for context are sent to the LLM
-3. The suggested commit message is opened for review and editing if needed
-
-It's possible to abort the commit by deleting the message and saving before exiting the editor.
-
 
 ### Temperature
 
@@ -258,7 +275,7 @@ One point to consider is that fast responses are very nice when you are just try
 
 There are other terminal based AI projects, so why build another one? The short answer is that none quite provided the experience I wanted for this particular use case.
 
-One category of in shell assistants drop you into a whole new shell enviroment. This is great for some uses cases, such as the excellent [Aider](https://github.com/Aider-AI/aider) project. But I'm still spending a lot of time in my good ol' shell.
+One category of in shell assistants drop you into a whole new shell enviroment. I like my shell and I don't want to mess with it too much.
 
 Another category leans a bit more toward a TUI, showing a menu of results on the screen to choose from, for example. The experince I desire is closer to a classic shell utility—like an `ls` that lists ideas for the next command to run, instead of listing files.
 
@@ -266,7 +283,7 @@ Finally, I was so inspired when I saw how good and cheap DeepSeek v3 was that I 
 
 ## Config path philosophy
 
-First of all, I don't like apps cluttering my home directory with a `.app` folder to hold their config and files. So that's out.
+First of all, I don't like apps cluttering my home directory with a `~/.app` folder to hold their config and files. So that's out.
 
 On Linux, using `~/.config` and `XDG_CONFIG_HOME` is well accepted, for config files. Then we also have `~/.local/share`, etc. After initially dabbling in a more complicated arrangement using multiple dirs, I'm putting everything under config now to keep things simple.
 
