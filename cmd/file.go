@@ -59,7 +59,7 @@ var fileCmd = &cobra.Command{
 			t = temperature
 		}
 
-		response, err := aiClient.GetCompletion(context.Background(), system_prompt, description, false, t, false, fileModel)
+		response, err := aiClient.GetCompletion(context.Background(), system_prompt, description, t, false, fileModel)
 		if err != nil {
 			return fmt.Errorf("error getting completion: %w", err)
 		}

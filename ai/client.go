@@ -13,7 +13,6 @@ import (
 	openai "github.com/openai/openai-go/v3"
 	openaiOption "github.com/openai/openai-go/v3/option"
 	"github.com/scottyeager/pal/config"
-	"github.com/scottyeager/pal/inout"
 )
 
 type Client struct {
@@ -57,9 +56,8 @@ func NewClient(cfg *config.Config, modelName string) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt string, storeCommands bool, temperature float64, formatMarkdown bool, model string) (string, error) {
+func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt string, temperature float64, formatMarkdown bool, model string) (string, error) {
 	var completion string
-	var err error
 
 	if c.providerName == "anthropic" {
 		message, err := c.anthropicClient.Messages.New(ctx, anthropic.MessageNewParams{
@@ -113,24 +111,6 @@ func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt
 	if thinkStart := strings.Index(completion, "<tool_call>"); thinkStart != -1 {
 		if thinkEnd := strings.Index(completion[thinkStart:], "</tool_call>"); thinkEnd != -1 {
 			completion = completion[:thinkStart] + strings.TrimSpace(completion[thinkStart+thinkEnd+len("</tool_call>"):])
-		}
-	}
-
-	if storeCommands {
-		// Remove any blank lines from completion
-		lines := strings.Split(completion, "\n")
-		var nonEmptyLines []string
-		for _, line := range lines {
-			if len(strings.TrimSpace(line)) > 0 {
-				nonEmptyLines = append(nonEmptyLines, line)
-			}
-		}
-		completion = strings.Join(nonEmptyLines, "\n")
-
-		// Store the completion
-		err = inout.StoreCommands(completion)
-		if err != nil {
-			return completion, fmt.Errorf("failed to write to disk: %w", err)
 		}
 	}
 

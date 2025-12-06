@@ -139,7 +139,7 @@ The prompt can also be included in the contents of one or more files.`,
 			os.Exit(1)
 		}
 
-		response, err := client.GetCompletion(context.Background(), editSystemPrompt, finalPrompt, false, 1.0, false, editModel)
+		response, err := client.GetCompletion(context.Background(), editSystemPrompt, finalPrompt, 1.0, false, editModel)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting completion: %v\n", err)
 			os.Exit(1)
