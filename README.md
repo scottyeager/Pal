@@ -4,7 +4,7 @@
 
 ![demo3 1](https://github.com/user-attachments/assets/e6f4be6e-788e-453e-9f27-2b61b76755aa)
 
-For now, `fish` and `zsh` are fully supported and testing is done on Linux only. MacOS might just work too.
+For now, `fish` and `zsh` are well supported on Linux. I hear macOS works fine too, but I don't personally test on Mac. All bug reports and feature requests are welcome.
 
 Perhaps unsurprisingly, xkcd [has](https://xkcd.com/1168/) elucidated the core situation inspiring this software:
 
