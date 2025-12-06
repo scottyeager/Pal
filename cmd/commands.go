@@ -68,11 +68,27 @@ func Commands(cmd cobra.Command, query []string) error {
 	if cmd.Flags().Changed("temperature") {
 		t = temperature
 	}
-	response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, true, t, false, cmdModel)
+	response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, t, false, cmdModel)
 	if err != nil {
 		return fmt.Errorf("error getting completion: %v", err)
 	}
 
-	fmt.Println(response)
+	// Remove any blank lines from completion before storing
+	lines := strings.Split(response, "\n")
+	var nonEmptyLines []string
+	for _, line := range lines {
+		if len(strings.TrimSpace(line)) > 0 {
+			nonEmptyLines = append(nonEmptyLines, line)
+		}
+	}
+	cleanedResponse := strings.Join(nonEmptyLines, "\n")
+
+	// Store the completion
+	err = inout.StoreCommands(cleanedResponse)
+	if err != nil {
+		return fmt.Errorf("failed to write to disk: %w", err)
+	}
+
+	fmt.Println(cleanedResponse)
 	return nil
 }
