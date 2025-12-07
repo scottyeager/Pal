@@ -12,11 +12,11 @@ import (
 const commandFileName = "expansions.txt"
 
 func GetStoredCommands() (string, error) {
-	homeDir, err := os.UserHomeDir()
+	basePath, err := config.GetBasePath()
 	if err != nil {
-		return "", fmt.Errorf("failed to get home directory: %w", err)
+		return "", fmt.Errorf("failed to get base path: %w", err)
 	}
-	storagePath := filepath.Join(homeDir, ".local", "share", "pal_helper", commandFileName)
+	storagePath := filepath.Join(basePath, commandFileName)
 
 	// Ensure directory exists
 	storageDir := filepath.Dir(storagePath)
@@ -43,11 +43,11 @@ func GetStoredCommands() (string, error) {
 }
 
 func StorePrefix0Command(command string) error {
-	homeDir, err := os.UserHomeDir()
+	basePath, err := config.GetBasePath()
 	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
+		return fmt.Errorf("failed to get base path: %w", err)
 	}
-	storagePath := filepath.Join(homeDir, ".local", "share", "pal_helper", commandFileName)
+	storagePath := filepath.Join(basePath, commandFileName)
 
 	// Ensure directory exists
 	storageDir := filepath.Dir(storagePath)
