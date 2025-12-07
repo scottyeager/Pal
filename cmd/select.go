@@ -2,13 +2,13 @@ package cmd
 
 import (
 	"bytes"
-	_ "embed"
 	"fmt"
 	"html/template"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
+	"github.com/scottyeager/pal/selector"
 	"github.com/spf13/cobra"
 )
 
@@ -52,9 +52,6 @@ var selectCmd = &cobra.Command{
 	},
 }
 
-//go:embed select.html
-var selectHTML string
-
 func generateHTML(dir string) (string, error) {
 	// Get the file tree.
 	fileTree, err := getFileTree(dir)
@@ -63,7 +60,7 @@ func generateHTML(dir string) (string, error) {
 	}
 
 	// Create a new template.
-	tmpl, err := template.New("filetree").Parse(selectHTML)
+	tmpl, err := template.New("filetree").Parse(selector.SelectHTML)
 	if err != nil {
 		return "", err
 	}
@@ -130,5 +127,3 @@ func findParent(root *File, path string) *File {
 
 	return nil
 }
-
-
