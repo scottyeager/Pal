@@ -14,6 +14,7 @@ var version string
 
 var temperature float64
 var markdown bool
+var chat bool
 
 var userMessage []string
 
@@ -29,6 +30,7 @@ func init() {
 	rootCmd.Flags().Bool("zsh-completion", false, "Print zsh autocompletion script and exit. Output is meant to be sourced by zsh")
 	rootCmd.PersistentFlags().Float64VarP(&temperature, "temperature", "t", 0, "Set the temperature for the AI model, between 0 and 2 (higher values make output more random)")
 	rootCmd.PersistentFlags().BoolVarP(&markdown, "markdown", "m", false, "Toggle markdown formatting in output (inverts your config setting)")
+	rootCmd.PersistentFlags().BoolVarP(&chat, "chat", "c", false, "Enable chat mode (maintain conversation history)")
 
 	// Disable help command. --help still works
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
