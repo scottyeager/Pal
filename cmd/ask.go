@@ -72,9 +72,22 @@ var askCmd = &cobra.Command{
 			t = temperature
 		}
 
-		response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, t, formatMarkdown, askModel)
-		if err != nil {
-			return fmt.Errorf("error getting completion: %w", err)
+		var response string
+		var thread *inout.Thread
+		if chat {
+			response, thread, err = aiClient.GetCompletionWithHistory(context.Background(), system_prompt, question, t, formatMarkdown, askModel)
+			if err != nil {
+				return fmt.Errorf("error getting completion with history: %w", err)
+			}
+			// Print thread info for reference
+			if thread != nil {
+				fmt.Printf("[Chat thread: %s/%d]\n", thread.Date.Format("2006-01-02"), thread.ID)
+			}
+		} else {
+			response, err = aiClient.GetCompletion(context.Background(), system_prompt, question, t, formatMarkdown, askModel)
+			if err != nil {
+				return fmt.Errorf("error getting completion: %w", err)
+			}
 		}
 
 		fmt.Println(response)
