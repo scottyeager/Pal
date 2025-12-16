@@ -165,12 +165,8 @@ func (c *Client) getCompletionInternal(ctx context.Context, systemPrompt string,
 
 // formatCompletion handles markdown formatting and <tool_call> removal
 func (c *Client) formatCompletion(completion string, formatMarkdown bool) string {
-    // Remove <tool_call> block if present
-    if thinkStart := strings.Index(completion, "<tool_call>"); thinkStart != -1 {
-        if thinkEnd := strings.Index(completion[thinkStart:], "</tool_call>"); thinkEnd != -1 {
-            completion = completion[:thinkStart] + strings.TrimSpace(completion[thinkStart+thinkEnd+len("</tool_call>"):])
-        }
-    }
+    // First clean the completion
+    completion = c.cleanCompletion(completion)
 
     if formatMarkdown {
         r, _ := glamour.NewTermRenderer(
@@ -203,6 +199,17 @@ func (c *Client) formatCompletion(completion string, formatMarkdown bool) string
     return completion
 }
 
+// cleanCompletion removes <tool_call> blocks but doesn't apply markdown formatting
+func (c *Client) cleanCompletion(completion string) string {
+    // Remove <tool_call> block if present
+    if thinkStart := strings.Index(completion, "<tool_call>"); thinkStart != -1 {
+        if thinkEnd := strings.Index(completion[thinkStart:], "</tool_call>"); thinkEnd != -1 {
+            completion = completion[:thinkStart] + strings.TrimSpace(completion[thinkStart+thinkEnd+len("</tool_call>"):])
+        }
+    }
+    return completion
+}
+
 // GetCompletionWithHistory starts a new conversation thread with history tracking
 func (c *Client) GetCompletionWithHistory(ctx context.Context, system_prompt string, prompt string, temperature float64, formatMarkdown bool, model string) (string, *inout.Thread, error) {
     // Create history manager
@@ -223,10 +230,14 @@ func (c *Client) GetCompletionWithHistory(ctx context.Context, system_prompt str
         return "", nil, err
     }
     
+    // Clean the completion (remove <tool_call> blocks) for storage
+    cleanCompletion := c.cleanCompletion(completion)
+    
+    // Format for display
     formattedCompletion := c.formatCompletion(completion, formatMarkdown)
 
-    // Store the turn in history
-    if err := history.AddTurn(thread, prompt, formattedCompletion); err != nil {
+    // Store the clean (unformatted) completion in history
+    if err := history.AddTurn(thread, prompt, cleanCompletion); err != nil {
         // Don't fail the request if history storage fails, just log it
         fmt.Printf("Warning: failed to store history: %v\n", err)
     }
@@ -241,9 +252,13 @@ func (c *Client) ContinueCompletion(ctx context.Context, thread *inout.Thread, p
         return "", err
     }
     
+    // Clean the completion (remove <tool_call> blocks) for storage
+    cleanCompletion := c.cleanCompletion(completion)
+    
+    // Format for display
     formattedCompletion := c.formatCompletion(completion, formatMarkdown)
     
-    // Store the turn in history
+    // Store the clean (unformatted) completion in history
     history, err := inout.NewHistory()
     if err != nil {
         // Don't fail the request if history manager creation fails
@@ -251,7 +266,7 @@ func (c *Client) ContinueCompletion(ctx context.Context, thread *inout.Thread, p
         return formattedCompletion, nil
     }
     
-    if err := history.AddTurn(thread, prompt, formattedCompletion); err != nil {
+    if err := history.AddTurn(thread, prompt, cleanCompletion); err != nil {
         // Don't fail the request if history storage fails, just log it
         fmt.Printf("Warning: failed to store history: %v\n", err)
     }
