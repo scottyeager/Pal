@@ -75,18 +75,35 @@ var askCmd = &cobra.Command{
 		var response string
 		var thread *inout.Thread
 		if chat {
+			// Create history manager
+			history, err := inout.NewHistory()
+			if err != nil {
+				return fmt.Errorf("failed to create history manager: %w", err)
+			}
+			
+			// Get or create thread
+			thread, err = history.GetLatestThread()
+			if err != nil {
+				return fmt.Errorf("failed to get latest thread: %w", err)
+			}
+			
+			// Continue the conversation with the existing thread
+			response, err = aiClient.ContinueCompletion(context.Background(), thread, question, t, formatMarkdown, askModel)
+			if err != nil {
+				return fmt.Errorf("error continuing completion: %w", err)
+			}
+			
+			// Print thread info for reference
+			fmt.Printf("[Chat thread: %s/%d]\n", thread.Date.Format("2006-01-02"), thread.ID)
+		} else {
+			// Create a new thread each time (no -c flag)
 			response, thread, err = aiClient.GetCompletionWithHistory(context.Background(), system_prompt, question, t, formatMarkdown, askModel)
 			if err != nil {
 				return fmt.Errorf("error getting completion with history: %w", err)
 			}
 			// Print thread info for reference
 			if thread != nil {
-				fmt.Printf("[Chat thread: %s/%d]\n", thread.Date.Format("2006-01-02"), thread.ID)
-			}
-		} else {
-			response, err = aiClient.GetCompletion(context.Background(), system_prompt, question, t, formatMarkdown, askModel)
-			if err != nil {
-				return fmt.Errorf("error getting completion: %w", err)
+				fmt.Printf("[New chat thread: %s/%d]\n", thread.Date.Format("2006-01-02"), thread.ID)
 			}
 		}
 
