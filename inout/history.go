@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -238,10 +239,16 @@ func (h *History) loadThread(date time.Time, threadID int) (*Thread, error) {
 	}
 
 	// Convert map to sorted slice
-	for i := 0; i < len(turnMap); i++ {
-		if turn, exists := turnMap[i]; exists {
-			turns = append(turns, *turn)
-		}
+	// Get all keys and sort them
+	keys := make([]int, 0, len(turnMap))
+	for k := range turnMap {
+		keys = append(keys, k)
+	}
+	sort.Ints(keys)
+
+	// Add turns in sorted order
+	for _, k := range keys {
+		turns = append(turns, *turnMap[k])
 	}
 
 	return &Thread{
