@@ -21,7 +21,8 @@ type History struct {
 type Thread struct {
 	ID           int
 	Date         time.Time
-	SystemPrompt string
+	CommandName  string  // Store command name
+	SystemPrompt string  // Store actual system prompt content
 	Turns        []Turn
 	Path         string
 }
@@ -83,7 +84,7 @@ func (h *History) getTurnPath(date time.Time, threadID int, turnID int, isPrompt
 }
 
 // StartNewThread starts a new conversation thread for today
-func (h *History) StartNewThread(systemPrompt string) (*Thread, error) {
+func (h *History) StartNewThread(commandName string) (*Thread, error) {
 	today := time.Now()
 	datePath := h.getDatePath(today)
 
@@ -115,18 +116,17 @@ func (h *History) StartNewThread(systemPrompt string) (*Thread, error) {
 		return nil, fmt.Errorf("failed to create thread directory: %w", err)
 	}
 
-	// Store system prompt
-	if systemPrompt != "" {
-		systemPromptPath := filepath.Join(threadPath, "0-system-prompt")
-		if err := os.WriteFile(systemPromptPath, []byte(systemPrompt), 0644); err != nil {
-			return nil, fmt.Errorf("failed to write system prompt: %w", err)
-		}
+	// Store command name in 0-{commandName} file (content can be empty initially)
+	commandPath := filepath.Join(threadPath, "0-"+commandName)
+	if err := os.WriteFile(commandPath, []byte(""), 0644); err != nil {
+		return nil, fmt.Errorf("failed to write command file: %w", err)
 	}
 
 	return &Thread{
 		ID:           threadID,
 		Date:         today,
-		SystemPrompt: systemPrompt,
+		CommandName:  commandName,
+		SystemPrompt: "", // Will be set by UpdateSystemPrompt if needed
 		Turns:        []Turn{},
 		Path:         threadPath,
 	}, nil
@@ -165,17 +165,31 @@ func (h *History) loadThread(date time.Time, threadID int) (*Thread, error) {
 		return nil, fmt.Errorf("thread %d not found for date %s", threadID, date.Format("2006-01-02"))
 	}
 
-	// Read system prompt if it exists
+	// Read command name and system prompt from 0-{commandName} file
+	commandName := ""
 	systemPrompt := ""
-	systemPromptPath := filepath.Join(threadPath, "0-system-prompt")
-	if content, err := os.ReadFile(systemPromptPath); err == nil {
-		systemPrompt = string(content)
-	}
-
-	// Read turn files
+	
 	entries, err := os.ReadDir(threadPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read thread directory: %w", err)
+	}
+	
+	// Look for 0-{commandName} file
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		
+		filename := entry.Name()
+		if strings.HasPrefix(filename, "0-") {
+			commandName = strings.TrimPrefix(filename, "0-")
+			// Read the file content as system prompt
+			filePath := filepath.Join(threadPath, filename)
+			if content, err := os.ReadFile(filePath); err == nil {
+				systemPrompt = string(content)
+			}
+			break
+		}
 	}
 
 	turns := []Turn{}
@@ -189,8 +203,8 @@ func (h *History) loadThread(date time.Time, threadID int) (*Thread, error) {
 
 		filename := entry.Name()
 
-		// Skip system-prompt file
-		if filename == "0-system-prompt" {
+		// Skip command file
+		if strings.HasPrefix(filename, "0-") {
 			continue
 		}
 
@@ -254,6 +268,7 @@ func (h *History) loadThread(date time.Time, threadID int) (*Thread, error) {
 	return &Thread{
 		ID:           threadID,
 		Date:         date,
+		CommandName:  commandName,
 		SystemPrompt: systemPrompt,
 		Turns:        turns,
 		Path:         threadPath,
@@ -389,12 +404,29 @@ func (h *History) GetThreadByPath(path string) (*Thread, error) {
 	return h.GetOrCreateThread(threadID, dateStr)
 }
 
+// UpdateSystemPrompt updates the system prompt content for a thread
+func (h *History) UpdateSystemPrompt(thread *Thread, systemPrompt string) error {
+	commandPath := filepath.Join(thread.Path, "0-"+thread.CommandName)
+	if err := os.WriteFile(commandPath, []byte(systemPrompt), 0644); err != nil {
+		return fmt.Errorf("failed to update system prompt: %w", err)
+	}
+	thread.SystemPrompt = systemPrompt
+	return nil
+}
+
 // CopyThread creates a copy of a thread with a new ID
 func (h *History) CopyThread(source *Thread) (*Thread, error) {
-	// Create new thread with the same system prompt
-	newThread, err := h.StartNewThread(source.SystemPrompt)
+	// Create new thread with the same command name
+	newThread, err := h.StartNewThread(source.CommandName)
 	if err != nil {
 		return nil, err
+	}
+
+	// Copy system prompt if it exists
+	if source.SystemPrompt != "" {
+		if err := h.UpdateSystemPrompt(newThread, source.SystemPrompt); err != nil {
+			return nil, err
+		}
 	}
 
 	// Copy all turns

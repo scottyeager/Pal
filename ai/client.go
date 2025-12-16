@@ -211,21 +211,30 @@ func (c *Client) cleanCompletion(completion string) string {
 }
 
 // GetCompletionWithHistory starts a new conversation thread with history tracking
-func (c *Client) GetCompletionWithHistory(ctx context.Context, system_prompt string, prompt string, temperature float64, formatMarkdown bool, model string) (string, *inout.Thread, error) {
+func (c *Client) GetCompletionWithHistory(ctx context.Context, commandName string, prompt string, temperature float64, formatMarkdown bool, model string) (string, *inout.Thread, error) {
     // Create history manager
     history, err := inout.NewHistory()
     if err != nil {
         return "", nil, fmt.Errorf("failed to create history manager: %w", err)
     }
 
-    // Start a new thread with system prompt
-    thread, err := history.StartNewThread(system_prompt)
+    // Start a new thread with command name
+    thread, err := history.StartNewThread(commandName)
     if err != nil {
         return "", nil, fmt.Errorf("failed to start new thread: %w", err)
     }
 
+    // Generate system prompt based on command name
+    systemPrompt := c.generateSystemPrompt(commandName)
+    
+    // Update the thread with the actual system prompt content
+    if err := history.UpdateSystemPrompt(thread, systemPrompt); err != nil {
+        // Log but don't fail
+        fmt.Printf("Warning: failed to store system prompt: %v\n", err)
+    }
+
     // Get completion using internal function
-    completion, err := c.getCompletionInternal(ctx, system_prompt, prompt, nil, temperature)
+    completion, err := c.getCompletionInternal(ctx, systemPrompt, prompt, nil, temperature)
     if err != nil {
         return "", nil, err
     }
@@ -243,6 +252,23 @@ func (c *Client) GetCompletionWithHistory(ctx context.Context, system_prompt str
     }
 
     return formattedCompletion, thread, nil
+}
+
+// generateSystemPrompt generates appropriate system prompt based on command name
+func (c *Client) generateSystemPrompt(commandName string) string {
+    switch commandName {
+    case "ask":
+        return "You are a helpful assistant that runs in the users shell but can answer on any topic. Keep responses concise"
+    case "edit":
+        return "You are a code editing assistant that receives file edits and returns them in a structured format"
+    case "file":
+        return "You are a file generation assistant that creates file contents based on descriptions"
+    case "cmd":
+        return "You are a command suggestion assistant that helps users find the right shell commands"
+    // Add more command-specific prompts as needed
+    default:
+        return "You are a helpful assistant"
+    }
 }
 
 // ContinueCompletion continues an existing conversation thread

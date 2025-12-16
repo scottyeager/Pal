@@ -97,7 +97,7 @@ var askCmd = &cobra.Command{
 			fmt.Printf("[Chat thread: %s/%d]\n", thread.Date.Format("2006-01-02"), thread.ID)
 		} else {
 			// Create a new thread each time (no -c flag)
-			response, thread, err = aiClient.GetCompletionWithHistory(context.Background(), system_prompt, question, t, formatMarkdown, askModel)
+			response, thread, err = aiClient.GetCompletionWithHistory(context.Background(), "ask", question, t, formatMarkdown, askModel)
 			if err != nil {
 				return fmt.Errorf("error getting completion with history: %w", err)
 			}
