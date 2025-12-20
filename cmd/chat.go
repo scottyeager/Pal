@@ -50,7 +50,7 @@ var chatCmd = &cobra.Command{
 		}
 
 		// Set the global chat variable to enable chat mode
-		chat = true
+		globalSession.Chat = true
 
 		// Call the original command's RunE function
 		return targetCmd.RunE(targetCmd, args)

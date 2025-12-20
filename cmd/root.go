@@ -7,16 +7,13 @@ import (
 
 	"github.com/scottyeager/pal/abbr"
 	"github.com/scottyeager/pal/config"
+	"github.com/scottyeager/pal/cmd/session"
 	"github.com/spf13/cobra"
 )
 
 var version string
 
-var temperature float64
-var markdown bool
-var chat bool
-
-var userMessage []string
+var globalSession *session.Session
 
 func init() {
 	rootCmd.Flags().Bool("version", false, "Print version number")
@@ -28,9 +25,12 @@ func init() {
 	rootCmd.Flags().Bool("zsh-abbr", false, "Writes the zsh-abbr plugin to a tmp directory and prints the path, to be sourced by Zsh")
 	rootCmd.Flags().Bool("fish-completion", false, "Print fish autocompletion script and exit. Output is meant to be sourced by fish")
 	rootCmd.Flags().Bool("zsh-completion", false, "Print zsh autocompletion script and exit. Output is meant to be sourced by zsh")
-	rootCmd.PersistentFlags().Float64VarP(&temperature, "temperature", "t", 0, "Set the temperature for the AI model, between 0 and 2 (higher values make output more random)")
-	rootCmd.PersistentFlags().BoolVarP(&markdown, "markdown", "m", false, "Toggle markdown formatting in output (inverts your config setting)")
-	rootCmd.PersistentFlags().BoolVarP(&chat, "chat", "c", false, "Enable chat mode (maintain conversation history)")
+	rootCmd.PersistentFlags().Float64VarP(&globalSession.Temperature, "temperature", "t", 0, "Set the temperature for the AI model, between 0 and 2 (higher values make output more random)")
+	rootCmd.PersistentFlags().BoolVarP(&globalSession.Markdown, "markdown", "m", false, "Toggle markdown formatting in output (inverts your config setting)")
+	rootCmd.PersistentFlags().BoolVarP(&globalSession.Chat, "chat", "c", false, "Enable chat mode (maintain conversation history)")
+
+	// Initialize session
+	globalSession = session.NewSession()
 
 	// Disable help command. --help still works
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
@@ -143,7 +143,7 @@ func Execute() {
 			// No-op here, just skipping preparsing
 		default:
 			split := preparse(os.Args)
-			userMessage = os.Args[split:]
+			globalSession.UserMessage = os.Args[split:]
 			os.Args = os.Args[:split]
 		}
 	}

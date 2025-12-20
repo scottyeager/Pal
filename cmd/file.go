@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/scottyeager/pal/ai"
-	"github.com/scottyeager/pal/config"
 	"github.com/scottyeager/pal/inout"
 	"github.com/spf13/cobra"
 )
@@ -16,37 +14,32 @@ var fileCmd = &cobra.Command{
 	Short: "Generate file contents based on a description",
 	Long:  `Generate file contents based on a description. The output is sanitized for direct use.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		stdinInput, err := inout.ReadStdin()
-		if err != nil {
+		// Read stdin
+		if err := globalSession.ReadStdin(); err != nil {
 			return err
 		}
 
-		if len(args) == 0 && len(stdinInput) == 0 {
+		if len(args) == 0 && len(globalSession.StdinInput) == 0 {
 			return fmt.Errorf("please provide a description of the file to generate or pipe in content")
 		}
 
-		cfg, err := config.LoadConfig()
-		if err != nil {
+		// Load and check configuration
+		if err := globalSession.LoadConfig(); err != nil {
 			return fmt.Errorf("error loading config: %w", err)
 		}
 
-		if err := config.CheckConfiguration(cfg); err != nil {
+		if err := globalSession.CheckConfig(); err != nil {
 			return err
 		}
 
-		fileModel := config.GetSelectedModel(cfg, "file")
-		aiClient, err := ai.NewClient(cfg, fileModel)
-
-		if err != nil {
-			return fmt.Errorf("error creating AI client: %w", err)
-		}
+		fileModel := globalSession.GetSelectedModel("file")
 
 		var description string
-		if stdinInput != "" {
+		if globalSession.StdinInput != "" {
 			if len(args) > 0 {
-				description = stdinInput + "\nThat concludes the stdin contents. Now here's the description from the user:\n" + strings.Join(args, " ")
+				description = globalSession.StdinInput + "\nThat concludes the stdin contents. Now here's the description from the user:\n" + strings.Join(args, " ")
 			} else {
-				description = stdinInput
+				description = globalSession.StdinInput
 			}
 		} else {
 			description = strings.Join(args, " ")
@@ -56,10 +49,10 @@ var fileCmd = &cobra.Command{
 
 		t := 1.0
 		if cmd.Flags().Changed("temperature") {
-			t = temperature
+			t = globalSession.Temperature
 		}
 
-		response, err := aiClient.GetCompletion(context.Background(), system_prompt, description, t, false, fileModel)
+		response, err := globalSession.GetCompletion(context.Background(), system_prompt, description, fileModel)
 		if err != nil {
 			return fmt.Errorf("error getting completion: %w", err)
 		}
