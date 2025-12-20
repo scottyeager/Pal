@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/scottyeager/pal/ai"
-	"github.com/scottyeager/pal/config"
 	"github.com/scottyeager/pal/inout"
 	"github.com/spf13/cobra"
 )
@@ -27,48 +25,38 @@ var cmdCmd = &cobra.Command{
 }
 
 func Commands(cmd cobra.Command, query []string) error {
-	stdinInput, err := inout.ReadStdin()
-	if err != nil {
+	// Read stdin
+	if err := globalSession.ReadStdin(); err != nil {
 		return fmt.Errorf("error reading stdin: %v", err)
 	}
 
-	if len(userMessage) == 0 && stdinInput == "" {
+	if len(globalSession.UserMessage) == 0 && globalSession.StdinInput == "" {
 		return fmt.Errorf("No input detected")
 	}
 
-	cfg, err := config.LoadConfig()
-	if err != nil {
+	// Load and check configuration
+	if err := globalSession.LoadConfig(); err != nil {
 		return fmt.Errorf("error loading config: %v", err)
 	}
 
-	var question string
-	if stdinInput != "" && len(userMessage) > 0 {
-		question = stdinInput + "\nThat concludes the stdin contents. Now here's the query from the user:\n" + strings.Join(userMessage, " ")
-	} else if stdinInput != "" {
-		question = stdinInput
-	} else {
-		question = strings.Join(userMessage, " ")
-	}
-
-	if err := config.CheckConfiguration(cfg); err != nil {
+	if err := globalSession.CheckConfig(); err != nil {
 		return err
 	}
 
-	// Get model for cmd command
-	cmdModel := config.GetSelectedModel(cfg, "cmd")
+	// Get user input
+	question := globalSession.GetUserInput()
 
-	aiClient, err := ai.NewClient(cfg, cmdModel)
-	if err != nil {
-		return fmt.Errorf("error creating AI client: %v", err)
-	}
+	// Get model for cmd command
+	cmdModel := globalSession.GetSelectedModel("cmd")
 
 	system_prompt := "You are a helpful assistant that suggests shell commands. Each command is a single line that can run in the shell. Respond with three command options, one per line. Don't add anything extra, no context, no explanations, no formatting, no code blocks."
 
 	t := 0.0
 	if cmd.Flags().Changed("temperature") {
-		t = temperature
+		t = globalSession.Temperature
 	}
-	response, err := aiClient.GetCompletion(context.Background(), system_prompt, question, t, false, cmdModel)
+
+	response, err := globalSession.GetCompletion(context.Background(), system_prompt, question, cmdModel)
 	if err != nil {
 		return fmt.Errorf("error getting completion: %v", err)
 	}

@@ -7,8 +7,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/scottyeager/pal/ai"
-	"github.com/scottyeager/pal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -21,21 +19,16 @@ var commitCmd = &cobra.Command{
 	Use:   "/commit",
 	Short: "`git add` changed files and generate a commit message",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := config.LoadConfig()
-		if err != nil {
+		// Load and check configuration
+		if err := globalSession.LoadConfig(); err != nil {
 			return fmt.Errorf("error loading config: %w", err)
 		}
 
-		if err := config.CheckConfiguration(cfg); err != nil {
+		if err := globalSession.CheckConfig(); err != nil {
 			return err
 		}
 
-		commitModel := config.GetSelectedModel(cfg, "commit")
-
-		aiClient, err := ai.NewClient(cfg, commitModel)
-		if err != nil {
-			return fmt.Errorf("error creating AI client: %w", err)
-		}
+		commitModel := globalSession.GetSelectedModel("commit")
 
 		// We might want to use this as context, or as a way to pass a commit message, but for now ignore it
 		// stdinInput, err := io.ReadStdin()
@@ -131,7 +124,12 @@ var commitCmd = &cobra.Command{
 		// Who knew these were more like poetry than code? :P
 		t := 1.0
 		if cmd.Flags().Changed("temperature") {
-			t = temperature
+			t = globalSession.Temperature
+		}
+
+		aiClient, err := globalSession.NewAIClient(commitModel)
+		if err != nil {
+			return fmt.Errorf("error creating AI client: %w", err)
 		}
 
 		message, err := aiClient.GetCompletion(context.Background(), systemPrompt, prompt, t, false, commitModel)
