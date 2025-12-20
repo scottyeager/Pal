@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/scottyeager/pal/ai"
 	"github.com/scottyeager/pal/config"
 	"github.com/spf13/cobra"
 )
@@ -122,18 +121,18 @@ The prompt can also be included in the contents of one or more files.`,
 
 		finalPrompt := formattedFilesContent.String() + userPrompt
 
-		cfg, err := config.LoadConfig()
-		if err != nil {
+		// Load and check configuration
+		if err := globalSession.LoadConfig(); err != nil {
 			return fmt.Errorf("error loading config: %w", err)
 		}
 
-		if err := config.CheckConfiguration(cfg); err != nil {
+		if err := globalSession.CheckConfig(); err != nil {
 			return err
 		}
 
-		editModel := config.GetSelectedModel(cfg, "edit")
+		editModel := globalSession.GetSelectedModel("edit")
 
-		client, err := ai.NewClient(cfg, editModel)
+		client, err := globalSession.NewAIClient(editModel)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating AI client: %v\n", err)
 			os.Exit(1)
