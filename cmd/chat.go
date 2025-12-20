@@ -43,8 +43,26 @@ var chatCmd = &cobra.Command{
 			return err
 		}
 
-		// For /chat, we always use the "ask" model configuration
-		chatModel := config.GetSelectedModel(cfg, "ask")
+		// Get the latest thread to determine the original command
+		history, err := inout.NewHistory()
+		if err != nil {
+			return fmt.Errorf("failed to create history manager: %w", err)
+		}
+		
+		// Get or create thread
+		thread, err := history.GetLatestThread()
+		if err != nil {
+			return fmt.Errorf("failed to get latest thread: %w", err)
+		}
+		
+		// Get the original command from the thread
+		originalCommand := thread.CommandName
+		if originalCommand == "" {
+			originalCommand = "ask" // Default fallback
+		}
+		
+		// Use the original command's model configuration
+		chatModel := config.GetSelectedModel(cfg, originalCommand)
 
 		aiClient, err := ai.NewClient(cfg, chatModel)
 		if err != nil {
@@ -65,29 +83,11 @@ var chatCmd = &cobra.Command{
 			formatMarkdown = cfg.FormatMarkdown
 		}
 
-		system_prompt := "You are a helpful assistant that runs in the users shell but can answer on any topic. Keep responses concise"
-
-		if !cfg.FormatMarkdown {
-			system_prompt += " and avoid using Markdown formatting that won't render in a shell. Lists and bullets are fine, but avoid headings, bold, and italic text."
-		}
-
 		t := 1.0
 		if cmd.Flags().Changed("temperature") {
 			t = temperature
 		}
 
-		// Create history manager
-		history, err := inout.NewHistory()
-		if err != nil {
-			return fmt.Errorf("failed to create history manager: %w", err)
-		}
-		
-		// Get or create thread
-		thread, err := history.GetLatestThread()
-		if err != nil {
-			return fmt.Errorf("failed to get latest thread: %w", err)
-		}
-		
 		// Continue the conversation with the existing thread
 		response, err := aiClient.ContinueCompletion(context.Background(), thread, question, t, formatMarkdown, chatModel)
 		if err != nil {
