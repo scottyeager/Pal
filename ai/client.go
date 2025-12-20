@@ -211,7 +211,7 @@ func (c *Client) cleanCompletion(completion string) string {
 }
 
 // GetCompletionWithHistory starts a new conversation thread with history tracking
-func (c *Client) GetCompletionWithHistory(ctx context.Context, commandName string, prompt string, temperature float64, formatMarkdown bool, model string) (string, *inout.Thread, error) {
+func (c *Client) GetCompletionWithHistory(ctx context.Context, commandName string, systemPrompt string, prompt string, temperature float64, formatMarkdown bool, model string) (string, *inout.Thread, error) {
     // Create history manager
     history, err := inout.NewHistory()
     if err != nil {
@@ -224,13 +224,12 @@ func (c *Client) GetCompletionWithHistory(ctx context.Context, commandName strin
         return "", nil, fmt.Errorf("failed to start new thread: %w", err)
     }
 
-    // Generate system prompt based on command name
-    systemPrompt := c.generateSystemPrompt(commandName)
-    
     // Update the thread with the actual system prompt content
-    if err := history.UpdateSystemPrompt(thread, systemPrompt); err != nil {
-        // Log but don't fail
-        fmt.Printf("Warning: failed to store system prompt: %v\n", err)
+    if systemPrompt != "" {
+        if err := history.UpdateSystemPrompt(thread, systemPrompt); err != nil {
+            // Log but don't fail
+            fmt.Printf("Warning: failed to store system prompt: %v\n", err)
+        }
     }
 
     // Get completion using internal function
@@ -252,23 +251,6 @@ func (c *Client) GetCompletionWithHistory(ctx context.Context, commandName strin
     }
 
     return formattedCompletion, thread, nil
-}
-
-// generateSystemPrompt generates appropriate system prompt based on command name
-func (c *Client) generateSystemPrompt(commandName string) string {
-    switch commandName {
-    case "ask":
-        return "You are a helpful assistant that runs in the users shell but can answer on any topic. Keep responses concise"
-    case "edit":
-        return "You are a code editing assistant that receives file edits and returns them in a structured format"
-    case "file":
-        return "You are a file generation assistant that creates file contents based on descriptions"
-    case "cmd":
-        return "You are a command suggestion assistant that helps users find the right shell commands"
-    // Add more command-specific prompts as needed
-    default:
-        return "You are a helpful assistant"
-    }
 }
 
 // ContinueCompletion continues an existing conversation thread
