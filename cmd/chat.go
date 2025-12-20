@@ -49,10 +49,8 @@ var chatCmd = &cobra.Command{
 			return fmt.Errorf("original command %s not found", originalCommand)
 		}
 
-		// Set the chat flag on the target command
-		if err := targetCmd.Flags().Set("chat", "true"); err != nil {
-			return fmt.Errorf("failed to set chat flag: %w", err)
-		}
+		// Set the global chat variable to enable chat mode
+		chat = true
 
 		// Call the original command's RunE function
 		return targetCmd.RunE(targetCmd, args)
