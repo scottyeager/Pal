@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/glamour"
@@ -115,8 +116,9 @@ func (s *Session) ExecuteTurn(params TurnParams) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("failed to get latest thread: %w", err)
 		}
-		// Print thread info for reference
-		fmt.Printf("[Chat thread: %s/%d]\n", thread.Date.Format("2006-01-02"), thread.ID)
+		// Print thread info for reference. Go to stderr as to not interfere
+		// with piping /file output directly to a file
+		fmt.Fprintf(os.Stderr, "[Chat thread: %s/%d]\n", thread.Date.Format("2006-01-02"), thread.ID)
 	} else {
 		thread, err = history.StartNewThread(params.Command)
 		if err != nil {
