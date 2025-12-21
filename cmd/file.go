@@ -16,6 +16,9 @@ var fileCmd = &cobra.Command{
 	Use:   "/file",
 	Short: "Generate file contents based on a description",
 	Long:  `Generate file contents based on a description. The output is sanitized for direct use.`,
+	Annotations: map[string]string{
+		"takes_user_message": "true",
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		systemPrompt := "You are a helpful assistant that generates file contents. Provide only the raw file content without any additional commentary, explanations, or markdown formatting. Do not wrap the content in code blocks (```)."
 
