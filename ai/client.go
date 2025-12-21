@@ -57,15 +57,6 @@ func NewClient(cfg *config.Config, modelName string) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) GetCompletion(ctx context.Context, system_prompt string, prompt string, temperature float64, formatMarkdown bool, model string) (string, error) {
-    completion, err := c.getCompletionInternal(ctx, system_prompt, prompt, nil, temperature)
-    if err != nil {
-        return "", err
-    }
-    
-    return c.formatCompletion(completion, formatMarkdown), nil
-}
-
 // buildMessages builds message arrays for both Anthropic and OpenAI from a thread
 func (c *Client) buildMessages(thread *inout.Thread, prompt string) ([]anthropic.MessageParam, []openai.ChatCompletionMessageParamUnion, []anthropic.TextBlockParam) {
     var anthropicMessages []anthropic.MessageParam
@@ -163,43 +154,37 @@ func (c *Client) getCompletionInternal(ctx context.Context, systemPrompt string,
     return completion, nil
 }
 
-// formatCompletion handles markdown formatting and <tool_call> removal
-func (c *Client) formatCompletion(completion string, formatMarkdown bool) string {
-    // First clean the completion
-    completion = c.cleanCompletion(completion)
-
-    if formatMarkdown {
-        r, _ := glamour.NewTermRenderer(
-            glamour.WithAutoStyle(),
-            glamour.WithWordWrap(80),
-        )
-        formatted, err := r.Render(completion)
-        if err != nil {
-            return completion
-        }
-
-        // Remove the two space margin included in Glamour's default styles
-        lines := strings.Split(formatted, "\n")
-        for i, line := range lines {
-            parts := strings.SplitN(line, "  ", 2)
-            if len(parts) > 1 {
-                lines[i] = parts[1]
-            } else {
-                lines[i] = parts[0]
-            }
-        }
-        formatted = strings.Join(lines, "\n")
-
-        // Also trim one newline from the end, again to adjust default style
-        if strings.HasSuffix(formatted, "\n") {
-            formatted = formatted[:len(formatted)-1]
-        }
-        return formatted
+// formatCompletion handles markdown formatting
+func (c *Client) formatCompletion(completion string) string {
+    r, _ := glamour.NewTermRenderer(
+        glamour.WithAutoStyle(),
+        glamour.WithWordWrap(80),
+    )
+    formatted, err := r.Render(completion)
+    if err != nil {
+        return completion
     }
-    return completion
+
+    // Remove the two space margin included in Glamour's default styles
+    lines := strings.Split(formatted, "\n")
+    for i, line := range lines {
+        parts := strings.SplitN(line, "  ", 2)
+        if len(parts) > 1 {
+            lines[i] = parts[1]
+        } else {
+            lines[i] = parts[0]
+        }
+    }
+    formatted = strings.Join(lines, "\n")
+
+    // Also trim one newline from the end, again to adjust default style
+    if strings.HasSuffix(formatted, "\n") {
+        formatted = formatted[:len(formatted)-1]
+    }
+    return formatted
 }
 
-// cleanCompletion removes <tool_call> blocks but doesn't apply markdown formatting
+// cleanCompletion removes <tool_call> blocks
 func (c *Client) cleanCompletion(completion string) string {
     // Remove <tool_call> block if present
     if thinkStart := strings.Index(completion, "<tool_call>"); thinkStart != -1 {
@@ -242,7 +227,12 @@ func (c *Client) GetCompletionWithHistory(ctx context.Context, commandName strin
     cleanCompletion := c.cleanCompletion(completion)
     
     // Format for display
-    formattedCompletion := c.formatCompletion(completion, formatMarkdown)
+    var formattedCompletion string
+    if formatMarkdown {
+        formattedCompletion = c.formatCompletion(completion)
+    } else {
+        formattedCompletion = completion
+    }
 
     // Store the clean (unformatted) completion in history
     if err := history.AddTurn(thread, prompt, cleanCompletion); err != nil {
@@ -264,7 +254,12 @@ func (c *Client) ContinueCompletion(ctx context.Context, thread *inout.Thread, p
     cleanCompletion := c.cleanCompletion(completion)
     
     // Format for display
-    formattedCompletion := c.formatCompletion(completion, formatMarkdown)
+    var formattedCompletion string
+    if formatMarkdown {
+        formattedCompletion = c.formatCompletion(completion)
+    } else {
+        formattedCompletion = completion
+    }
     
     // Store the clean (unformatted) completion in history
     history, err := inout.NewHistory()
@@ -279,5 +274,26 @@ func (c *Client) ContinueCompletion(ctx context.Context, thread *inout.Thread, p
         fmt.Printf("Warning: failed to store history: %v\n", err)
     }
     
+    return formattedCompletion, nil
+}
+
+// GetCompletion gets a completion from the AI model without history tracking
+func (c *Client) GetCompletion(ctx context.Context, systemPrompt string, prompt string, temperature float64, formatMarkdown bool, model string) (string, error) {
+    completion, err := c.getCompletionInternal(ctx, systemPrompt, prompt, nil, temperature)
+    if err != nil {
+        return "", err
+    }
+
+    // Clean the completion (remove <tool_call> blocks)
+    cleanCompletion := c.cleanCompletion(completion)
+
+    // Format for display
+    var formattedCompletion string
+    if formatMarkdown {
+        formattedCompletion = c.formatCompletion(cleanCompletion)
+    } else {
+        formattedCompletion = cleanCompletion
+    }
+
     return formattedCompletion, nil
 }

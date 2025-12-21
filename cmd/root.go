@@ -7,15 +7,17 @@ import (
 
 	"github.com/scottyeager/pal/abbr"
 	"github.com/scottyeager/pal/config"
-	"github.com/scottyeager/pal/cmd/session"
+	"github.com/scottyeager/pal/session"
 	"github.com/spf13/cobra"
 )
 
 var version string
 
-var globalSession *session.Session
+var sesh *session.Session
 
 func init() {
+	sesh = &session.Session{}
+
 	rootCmd.Flags().Bool("version", false, "Print version number")
 	rootCmd.Flags().Bool("fish", false, "Print fish abbreviation script and completion script, then exit. Output is meant to be sourced by fish")
 	rootCmd.Flags().Bool("zsh", false, "Print zsh abbreviation script and completion script, then exit. Output is meant to be sourced by zsh")
@@ -25,12 +27,9 @@ func init() {
 	rootCmd.Flags().Bool("zsh-abbr", false, "Writes the zsh-abbr plugin to a tmp directory and prints the path, to be sourced by Zsh")
 	rootCmd.Flags().Bool("fish-completion", false, "Print fish autocompletion script and exit. Output is meant to be sourced by fish")
 	rootCmd.Flags().Bool("zsh-completion", false, "Print zsh autocompletion script and exit. Output is meant to be sourced by zsh")
-	rootCmd.PersistentFlags().Float64VarP(&globalSession.Temperature, "temperature", "t", 0, "Set the temperature for the AI model, between 0 and 2 (higher values make output more random)")
-	rootCmd.PersistentFlags().BoolVarP(&globalSession.Markdown, "markdown", "m", false, "Toggle markdown formatting in output (inverts your config setting)")
-	rootCmd.PersistentFlags().BoolVarP(&globalSession.Chat, "chat", "c", false, "Enable chat mode (maintain conversation history)")
-
-	// Initialize session
-	globalSession = session.NewSession()
+	rootCmd.PersistentFlags().Float64VarP(&sesh.Temperature, "temperature", "t", 0, "Set the temperature for the AI model, between 0 and 2 (higher values make output more random)")
+	rootCmd.PersistentFlags().BoolVarP(&sesh.Markdown, "markdown", "m", false, "Toggle markdown formatting in output (inverts your config setting)")
+	rootCmd.PersistentFlags().BoolVarP(&sesh.Chat, "chat", "c", false, "Enable chat mode (maintain conversation history)")
 
 	// Disable help command. --help still works
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
@@ -46,7 +45,7 @@ It uses AI to generate commands and can also manage shell abbreviations.`,
 		DisableDefaultCmd: true,
 	},
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		if temperature < 0 || temperature > 2 {
+		if sesh.Temperature < 0 || sesh.Temperature > 2 {
 			return fmt.Errorf("Temperature must be between 0 and 2")
 		} else {
 			return nil
@@ -143,7 +142,7 @@ func Execute() {
 			// No-op here, just skipping preparsing
 		default:
 			split := preparse(os.Args)
-			globalSession.UserMessage = os.Args[split:]
+			sesh.UserMessage = os.Args[split:]
 			os.Args = os.Args[:split]
 		}
 	}

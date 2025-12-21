@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 
+	"github.com/scottyeager/pal/session"
 	"github.com/spf13/cobra"
 )
 
@@ -19,81 +19,6 @@ var commitCmd = &cobra.Command{
 	Use:   "/commit",
 	Short: "`git add` changed files and generate a commit message",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Load and check configuration
-		if err := globalSession.LoadConfig(); err != nil {
-			return fmt.Errorf("error loading config: %w", err)
-		}
-
-		if err := globalSession.CheckConfig(); err != nil {
-			return err
-		}
-
-		commitModel := globalSession.GetSelectedModel("commit")
-
-		// We might want to use this as context, or as a way to pass a commit message, but for now ignore it
-		// stdinInput, err := io.ReadStdin()
-		// if err != nil {
-		// 	return err
-		// }
-
-		statusCmd := exec.Command("git", "status", "--porcelain")
-		statusOut, err := statusCmd.Output()
-		if err != nil {
-			return fmt.Errorf("failed to get git status: %w", err)
-		}
-
-		// Parse modified and staged files
-		lines := strings.Split(string(statusOut), "\n")
-		hasChanges := false
-		for _, line := range lines {
-			if len(line) > 0 && line[:2] != "??" {
-				hasChanges = true
-			}
-		}
-
-		if !hasChanges {
-			return fmt.Errorf("no changes to commit")
-		}
-
-		var filesToCommit []string
-		for _, line := range lines {
-			if len(line) > 3 {
-				// Check for modified (M), unstaged files (second column)
-				if line[1] == 'M' && line[0] != 'R' {
-					filesToCommit = append(filesToCommit, strings.TrimSpace(line[3:]))
-					// Renamed file that was also modified
-				} else if line[0] == 'R' && line[1] == 'M' {
-					filesToCommit = append(filesToCommit, strings.TrimSpace(strings.Split(line[3:], "->")[1]))
-				}
-			}
-		}
-
-		// Add any unstaged changes
-		if len(filesToCommit) > 0 {
-			addCmd := exec.Command("git", "add")
-			for _, path := range filesToCommit {
-				addCmd.Args = append(addCmd.Args, ":/:"+path)
-			}
-			if err := addCmd.Run(); err != nil {
-				return fmt.Errorf("failed to add files: %w. Using git command: %s", err, addCmd)
-			}
-		}
-
-		// Get diff
-		diffCmd := exec.Command("git", "diff", "--cached")
-		diffOut, err := diffCmd.Output()
-		if err != nil {
-			return fmt.Errorf("failed to get git diff: %w", err)
-		}
-
-		// Get last 10 commits
-		logCmd := exec.Command("git", "log", "-n", "10", "--oneline")
-		logOut, err := logCmd.Output()
-		if err != nil {
-			return fmt.Errorf("failed to get git log: %w", err)
-		}
-
-		// Generate commit message
 		systemPrompt := `You are a helpful assistant who generates concise and complete git commit messages based on code changes in diff format. Use the Conventional Commit style.
 
 		Follow these guidelines:
@@ -118,33 +43,65 @@ var commitCmd = &cobra.Command{
 
 		Respond only with the commit message. No explanations, additional formatting, or line breaks, please.`
 
-		prompt := `Recent commit history:\n` + string(logOut) + `\n\nDiffs for this commit:\n` + string(diffOut)
+		// Add all modified and deleted files (but not untracked files) with verbose output
+		addCmd := exec.Command("git", "add", "--update", "--verbose")
+		addOut, err := addCmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("failed to add files: %w", err)
+		}
+
+		// Check if anything was added by examining the verbose output
+		added := len(strings.TrimSpace(string(addOut))) > 0
+		if !added {
+			fmt.Println("Attempted to stage updated files, but no changes were found. Aborting.")
+			return nil
+		}
+
+		// Get diff
+		diffCmd := exec.Command("git", "diff", "--cached")
+		diffOut, err := diffCmd.Output()
+		if err != nil {
+			return fmt.Errorf("failed to get git diff: %w", err)
+		}
+
+		// Get last 10 commits
+		logCmd := exec.Command("git", "log", "-n", "10", "--oneline")
+		logOut, err := logCmd.Output()
+		if err != nil {
+			return fmt.Errorf("failed to get git log: %w", err)
+		}
+
+		// We don't really expect the user to give any input, but we include it
+		// if they do
+		prompt, err := sesh.ConstructPrompt()
+		if err != nil {
+			return fmt.Errorf("error constructing prompt: %w", err)
+		}
+
+		prompt = prompt + `\nRecent commit history:\n` + string(logOut) + `\n\nDiffs for this commit:\n` + string(diffOut)
 
 		// Higher temperatures seem to maybe create better commit messages
 		// Who knew these were more like poetry than code? :P
-		t := 1.0
-		if cmd.Flags().Changed("temperature") {
-			t = globalSession.Temperature
+		params := session.TurnParams{
+			Command:      "commit",
+			SystemPrompt: systemPrompt,
+			Prompt:       prompt,
+			Temperature:  1,
+			Markdown:     false,
+			FormatFunc:   strings.TrimSpace,
 		}
 
-		aiClient, err := globalSession.NewAIClient(commitModel)
+		// Generate commit message
+		response, err := sesh.ExecuteTurn(params)
 		if err != nil {
-			return fmt.Errorf("error creating AI client: %w", err)
+			return fmt.Errorf("failed to execute turn: %w", err)
 		}
-
-		message, err := aiClient.GetCompletion(context.Background(), systemPrompt, prompt, t, false, commitModel)
-		if err != nil {
-			return fmt.Errorf("failed to generate commit message: %w", err)
-		}
-
-		// Clean up message
-		message = strings.TrimSpace(message)
 
 		// Check if yolo mode is enabled
 		yoloMode, _ := cmd.Flags().GetBool("yolo")
 		if yoloMode {
 			// Auto-commit without editor
-			commitCmd := exec.Command("git", "commit", "-m", message)
+			commitCmd := exec.Command("git", "commit", "-m", response)
 			commitCmd.Stdout = os.Stdout
 			commitCmd.Stderr = os.Stderr
 			if err := commitCmd.Run(); err != nil {
@@ -154,7 +111,7 @@ var commitCmd = &cobra.Command{
 		}
 
 		// Add comment explaining how to abort
-		message = message + "\n\n# To abort this commit, delete the commit message and save the file\n" +
+		message := response + "\n\n# To abort this commit, delete the commit message and save the file\n" +
 			"# If you exit without saving, the pregenerated message will be used"
 
 		// Start interactive commit with prefilled message
