@@ -18,6 +18,9 @@ func init() {
 var commitCmd = &cobra.Command{
 	Use:   "/commit",
 	Short: "`git add` changed files and generate a commit message",
+	Annotations: map[string]string{
+		"takes_user_message": "true",
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		systemPrompt := `You are a helpful assistant who generates concise and complete git commit messages based on code changes in diff format. Use the Conventional Commit style.
 
