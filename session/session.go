@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/glamour"
 	"github.com/scottyeager/pal/ai"
 	"github.com/scottyeager/pal/config"
 	"github.com/scottyeager/pal/inout"
@@ -101,42 +102,46 @@ func (s *Session) ExecuteTurn(params TurnParams) (string, error) {
 		systemPrompt += " and avoid using Markdown formatting that won't render in a shell. Lists and bullets are fine, but avoid headings, bold, and italic text."
 	}
 
-	ctx := context.Background()
-	if s.Chat {
-		// Create history manager
-		history, err := inout.NewHistory()
-		if err != nil {
-			return "", fmt.Errorf("failed to create history manager: %w", err)
-		}
+	// Create history manager
+	history, err := inout.NewHistory()
+	if err != nil {
+		return "", fmt.Errorf("failed to create history manager: %w", err)
+	}
 
+	var thread *inout.Thread
+	if s.Chat {
 		// Get or create thread
-		thread, err := history.GetLatestThread()
+		thread, err = history.GetLatestThread()
 		if err != nil {
 			return "", fmt.Errorf("failed to get latest thread: %w", err)
 		}
-
-		// Continue the conversation with the existing thread
-		response, err := s.Client.ContinueCompletion(ctx, thread, userPrompt, temperature, markdown, model)
-		if err != nil {
-			return "", fmt.Errorf("error continuing completion: %w", err)
-		}
-
 		// Print thread info for reference
 		fmt.Printf("[Chat thread: %s/%d]\n", thread.Date.Format("2006-01-02"), thread.ID)
-		return response, nil
-
 	} else {
-		// Create a new thread each time (no -c flag)
-		response, thread, err := s.Client.GetCompletionWithHistory(ctx, params.Command, systemPrompt, userPrompt, temperature, markdown, model)
+		thread, err = history.StartNewThread(params.Command)
 		if err != nil {
-			return "", fmt.Errorf("error getting completion with history: %w", err)
+			return "", fmt.Errorf("error creating new thread: %w", err)
 		}
-		// Print thread info for reference
-		if thread != nil {
-			fmt.Printf("[New chat thread: %s/%d]\n", thread.Date.Format("2006-01-02"), thread.ID)
-		}
-		return response, nil
+		history.UpdateSystemPrompt(thread, systemPrompt)
+		// Maybe this could go behind a "debug" or "verbose" flag
+		// fmt.Printf("[New chat thread: %s/%d]\n", thread.Date.Format("2006-01-02"), thread.ID)
 	}
+
+	ctx := context.Background()
+	response, err := s.Client.CallLLMWithThread(ctx, thread, userPrompt, temperature, markdown, model)
+	if err != nil {
+		return "", fmt.Errorf("error continuing completion: %w", err)
+	}
+
+	response = cleanToolCalls(response)
+
+	history.AddTurn(thread, userPrompt, response)
+
+	if markdown {
+		response = formatMarkdown(response)
+	}
+
+	return response, nil
 }
 
 func (s *Session) ConstructPrompt() (string, error) {
@@ -155,4 +160,43 @@ func (s *Session) ConstructPrompt() (string, error) {
 	}
 
 	return userPrompt, nil
+}
+
+func formatMarkdown(text string) string {
+	r, _ := glamour.NewTermRenderer(
+		glamour.WithAutoStyle(),
+		glamour.WithWordWrap(80),
+	)
+	formatted, err := r.Render(text)
+	if err != nil {
+		return text
+	}
+
+	// Remove the two space margin included in Glamour's default styles
+	lines := strings.Split(formatted, "\n")
+	for i, line := range lines {
+		parts := strings.SplitN(line, "  ", 2)
+		if len(parts) > 1 {
+			lines[i] = parts[1]
+		} else {
+			lines[i] = parts[0]
+		}
+	}
+	formatted = strings.Join(lines, "\n")
+
+	// Also trim one newline from the end, again to adjust default style
+	if strings.HasSuffix(formatted, "\n") {
+		formatted = formatted[:len(formatted)-1]
+	}
+	return formatted
+}
+
+func cleanToolCalls(text string) string {
+	// Remove <tool_call> block if present
+	if thinkStart := strings.Index(text, "<tool_call>"); thinkStart != -1 {
+		if thinkEnd := strings.Index(text[thinkStart:], "</tool_call>"); thinkEnd != -1 {
+			text = text[:thinkStart] + strings.TrimSpace(text[thinkStart+thinkEnd+len("</tool_call>"):])
+		}
+	}
+	return text
 }

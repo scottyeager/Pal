@@ -176,7 +176,7 @@ func applyEdit(client *ai.Client, edit Edit, model string) error {
 	)
 
 	// Get the completion from the AI
-	response, err := client.GetCompletion(context.Background(), applySystemPrompt, applyPrompt, 0.0, false, model)
+	response, err := client.CallLLMWithPrompts(context.Background(), applySystemPrompt, applyPrompt, 0.0, false, model)
 	if err != nil {
 		return fmt.Errorf("failed to get completion: %w", err)
 	}
