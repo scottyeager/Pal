@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/scottyeager/pal/inout"
+	"github.com/scottyeager/pal/session"
 	"github.com/spf13/cobra"
 )
 
@@ -25,58 +25,39 @@ var cmdCmd = &cobra.Command{
 }
 
 func Commands(cmd cobra.Command, query []string) error {
-	// Read stdin
-	if err := globalSession.ReadStdin(); err != nil {
-		return fmt.Errorf("error reading stdin: %v", err)
-	}
-
-	if len(globalSession.UserMessage) == 0 && globalSession.StdinInput == "" {
-		return fmt.Errorf("No input detected")
-	}
-
-	// Load and check configuration
-	if err := globalSession.LoadConfig(); err != nil {
-		return fmt.Errorf("error loading config: %v", err)
-	}
-
-	if err := globalSession.CheckConfig(); err != nil {
-		return err
-	}
-
-	// Get user input
-	question := globalSession.GetUserInput()
-
-	// Get model for cmd command
-	cmdModel := globalSession.GetSelectedModel("cmd")
-
-	system_prompt := "You are a helpful assistant that suggests shell commands. Each command is a single line that can run in the shell. Respond with three command options, one per line. Don't add anything extra, no context, no explanations, no formatting, no code blocks."
-
-	t := 0.0
-	if cmd.Flags().Changed("temperature") {
-		t = globalSession.Temperature
-	}
-
-	response, err := globalSession.GetCompletion(context.Background(), system_prompt, question, cmdModel)
-	if err != nil {
-		return fmt.Errorf("error getting completion: %v", err)
-	}
+	systemPrompt := "You are a helpful assistant that suggests shell commands. Each command is a single line that can run in the shell. Respond with three command options, one per line. Don't add anything extra, no context, no explanations, no formatting, no code blocks."
 
 	// Remove any blank lines from completion before storing
-	lines := strings.Split(response, "\n")
-	var nonEmptyLines []string
-	for _, line := range lines {
-		if len(strings.TrimSpace(line)) > 0 {
-			nonEmptyLines = append(nonEmptyLines, line)
+	formatFunc := func(response string) string {
+		lines := strings.Split(response, "\n")
+		var nonEmptyLines []string
+		for _, line := range lines {
+			if len(strings.TrimSpace(line)) > 0 {
+				nonEmptyLines = append(nonEmptyLines, line)
+			}
 		}
+		return strings.Join(nonEmptyLines, "\n")
 	}
-	cleanedResponse := strings.Join(nonEmptyLines, "\n")
 
-	// Store the completion
-	err = inout.StoreCommands(cleanedResponse)
+	params := session.TurnParams{
+		Command:      "cmd",
+		SystemPrompt: systemPrompt,
+		Temperature:  0,
+		Markdown:     false,
+		FormatFunc:   formatFunc,
+	}
+
+	response, err := sesh.ExecuteTurn(params)
 	if err != nil {
-		return fmt.Errorf("failed to write to disk: %w", err)
+		return fmt.Errorf("failed to execute turn: %w", err)
 	}
 
-	fmt.Println(cleanedResponse)
+	// Store the commands
+	err = inout.StoreCommands(response)
+	if err != nil {
+		return fmt.Errorf("failed to write commands to disk: %w", err)
+	}
+
+	fmt.Println(response)
 	return nil
 }

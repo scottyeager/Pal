@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/scottyeager/pal/inout"
 	"github.com/spf13/cobra"
 )
@@ -39,7 +40,7 @@ var chatCmd = &cobra.Command{
 		originalCmd := rootCmd.Commands()
 		var targetCmd *cobra.Command
 		for _, c := range originalCmd {
-			if c.Name() == "/" + originalCommand {
+			if c.Name() == "/"+originalCommand {
 				targetCmd = c
 				break
 			}
@@ -50,7 +51,7 @@ var chatCmd = &cobra.Command{
 		}
 
 		// Set the global chat variable to enable chat mode
-		globalSession.Chat = true
+		sesh.Chat = true
 
 		// Call the original command's RunE function
 		return targetCmd.RunE(targetCmd, args)

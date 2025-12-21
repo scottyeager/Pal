@@ -1,13 +1,13 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/scottyeager/pal/config"
+	"github.com/scottyeager/pal/session"
 	"github.com/spf13/cobra"
 )
 
@@ -60,6 +60,7 @@ var editCmd = &cobra.Command{
 Accepts a list of file and folder names along with an optional prompt.
 The prompt can also be included in the contents of one or more files.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+
 		if len(args) == 0 {
 			cmd.Help()
 			return nil
@@ -121,34 +122,25 @@ The prompt can also be included in the contents of one or more files.`,
 
 		finalPrompt := formattedFilesContent.String() + userPrompt
 
-		// Load and check configuration
-		if err := globalSession.LoadConfig(); err != nil {
-			return fmt.Errorf("error loading config: %w", err)
+		params := session.TurnParams{
+			Command:      "edit",
+			SystemPrompt: editSystemPrompt,
+			Prompt:       finalPrompt,
+			Temperature:  1,
+			Markdown:     false,
+			FormatFunc:   nil,
 		}
 
-		if err := globalSession.CheckConfig(); err != nil {
-			return err
-		}
-
-		editModel := globalSession.GetSelectedModel("edit")
-
-		client, err := globalSession.NewAIClient(editModel)
+		response, err := sesh.ExecuteTurn(params)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating AI client: %v\n", err)
-			os.Exit(1)
-		}
-
-		response, err := client.GetCompletion(context.Background(), editSystemPrompt, finalPrompt, 1.0, false, editModel)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error getting completion: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("failed to execute turn: %w", err)
 		}
 
 		yoloMode, _ := cmd.Flags().GetBool("yolo")
 
 		if yoloMode {
 			// Get model for apply command
-			applyModel := config.GetSelectedModel(cfg, "apply")
+			applyModel := config.GetSelectedModel(sesh.Config, "apply")
 
 			edits, parseErr := parseEdits(response)
 			if parseErr != nil {
@@ -163,7 +155,7 @@ The prompt can also be included in the contents of one or more files.`,
 
 			appliedCount := 0
 			for _, edit := range edits {
-				err := applyEdit(client, edit, applyModel)
+				err := applyEdit(sesh.Client, edit, applyModel)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error applying edit to %s in yolo mode: %v\n", edit.FilePath, err)
 					continue
