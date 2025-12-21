@@ -21,8 +21,8 @@ type History struct {
 type Thread struct {
 	ID           int
 	Date         time.Time
-	CommandName  string  // Store command name
-	SystemPrompt string  // Store actual system prompt content
+	CommandName  string // Store command name
+	SystemPrompt string // Store actual system prompt content
 	Turns        []Turn
 	Path         string
 }
@@ -168,18 +168,18 @@ func (h *History) loadThread(date time.Time, threadID int) (*Thread, error) {
 	// Read command name and system prompt from 0-{commandName} file
 	commandName := ""
 	systemPrompt := ""
-	
+
 	entries, err := os.ReadDir(threadPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read thread directory: %w", err)
 	}
-	
+
 	// Look for 0-{commandName} file
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
 		}
-		
+
 		filename := entry.Name()
 		if strings.HasPrefix(filename, "0-") {
 			commandName = strings.TrimPrefix(filename, "0-")
