@@ -10,115 +10,90 @@ import (
 	"github.com/scottyeager/pal/inout"
 )
 
+// Session holds the values of the CLI args
 type Session struct {
-	Config       *config.Config
+	Temperature *float64
+	Markdown    bool
+	Chat        bool
+}
+
+// We duplicate some fields here because we want to centralize the logic for
+// determining the final behavior in this module. The config, CLI args, and the
+// individual command params (defaults or preferences) will be reconciled here
+type TurnParams struct {
+	Command     string
 	Temperature float64
 	Markdown    bool
 	Chat        bool
 	UserMessage []string
-	StdinInput  string
+	formatFunc  func(string) string
 }
 
-func NewSession() *Session {
-	return &Session{
-		Temperature: 0,
-		Markdown:    false,
-		Chat:        false,
-		UserMessage: []string{},
-		StdinInput:  "",
-	}
-}
-
-func (s *Session) LoadConfig() error {
+func (s *Session) ExecuteTurn(params TurnParams) (string, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		return fmt.Errorf("error loading config: %w", err)
+		return "", fmt.Errorf("error loading config: %w", err)
 	}
-	s.Config = cfg
-	return nil
-}
 
-func (s *Session) CheckConfig() error {
-	return config.CheckConfiguration(s.Config)
-}
+	if err := config.CheckConfiguration(cfg); err != nil {
+		return "", fmt.Errorf("configuration check failed: %w", err)
+	}
+	selectedModel := config.GetSelectedModel(cfg, params.Command)
 
-func (s *Session) GetSelectedModel(key string) string {
-	return config.GetSelectedModel(s.Config, key)
-}
+	aiClient, err := ai.NewClient(cfg, selectedModel)
+	if err != nil {
+		return "", fmt.Errorf("error creating AI client: %w", err)
+	}
 
-func (s *Session) NewAIClient(modelName string) (*ai.Client, error) {
-	return ai.NewClient(s.Config, modelName)
-}
+	stdInput, err := inout.ReadStdin()
+	if err != nil {
+		return "", fmt.Errorf("error reading stdin: %w", err)
+	}
 
-func (s *Session) ReadStdin() error {
-	var err error
-	s.StdinInput, err = inout.ReadStdin()
-	return err
-}
-
-func (s *Session) GetUserInput() string {
-	if s.StdinInput != "" && len(s.UserMessage) > 0 {
-		return s.StdinInput + "\nThat concludes the stdin contents. Now here's the query from the user:\n" + strings.Join(s.UserMessage, " ")
-	} else if s.StdinInput != "" {
-		return s.StdinInput
+	var userInput string
+	if stdInput != "" && len(params.UserMessage) > 0 {
+		userInput = stdInput + "\nThat concludes the stdin contents. Now here's the query from the user:\n" + strings.Join(params.UserMessage, " ")
+	} else if stdInput != "" {
+		userInput = stdInput
 	} else {
-		return strings.Join(s.UserMessage, " ")
-	}
-}
-
-func (s *Session) GetCompletion(ctx context.Context, systemPrompt, prompt string, modelName string) (string, error) {
-	client, err := s.NewAIClient(modelName)
-	if err != nil {
-		return "", fmt.Errorf("error creating AI client: %w", err)
+		userInput = strings.Join(params.UserMessage, " ")
 	}
 
-	t := s.Temperature
-	if t == 0 {
-		t = 1.0
+	// Temp set on CLI take precedence, otherwise use default temp
+	var temperature float64
+	if s.Temperature == nil {
+		temperature = params.Temperature
+	} else {
+		temperature = *s.Temperature
 	}
 
-	formatMarkdown := s.Markdown
-	if !s.Config.FormatMarkdown {
-		formatMarkdown = !formatMarkdown
+	// The markdown param indicates whether a command would ever use Markdown
+	// for the output. From there the config is the default and CLI toggles the
+	// config value
+	var markdown bool
+	if params.Markdown {
+		if (cfg.FormatMarkdown && !s.Markdown) || (!cfg.FormatMarkdown && s.Markdown) {
+			markdown = true
+		} else {
+			markdown = false
+		}
+	} else {
+		markdown = false
 	}
 
-	return client.GetCompletion(ctx, systemPrompt, prompt, t, formatMarkdown, modelName)
-}
-
-func (s *Session) GetCompletionWithHistory(ctx context.Context, commandName, systemPrompt, prompt string, modelName string) (string, *inout.Thread, error) {
-	client, err := s.NewAIClient(modelName)
-	if err != nil {
-		return "", nil, fmt.Errorf("error creating AI client: %w", err)
+	// Commands don't usually specify whether to use chat mode. The /chat
+	// command is the exception
+	var chat bool
+	if params.Chat || s.Chat {
+		chat = true
+	} else {
+		chat = false
 	}
 
-	t := s.Temperature
-	if t == 0 {
-		t = 1.0
+	ctx := context.Background()
+	if chat {
+		return aiClient.ContinueCompletion(ctx, nil, userInput, selectedModel)
+	} else {
+		return aiClient.GetCompletion(ctx, "", userInput, temperature, markdown, selectedModel)
 	}
-
-	formatMarkdown := s.Markdown
-	if !s.Config.FormatMarkdown {
-		formatMarkdown = !formatMarkdown
-	}
-
-	return client.GetCompletionWithHistory(ctx, commandName, systemPrompt, prompt, t, formatMarkdown, modelName)
-}
-
-func (s *Session) ContinueCompletion(ctx context.Context, thread *inout.Thread, prompt string, modelName string) (string, error) {
-	client, err := s.NewAIClient(modelName)
-	if err != nil {
-		return "", fmt.Errorf("error creating AI client: %w", err)
-	}
-
-	t := s.Temperature
-	if t == 0 {
-		t = 1.0
-	}
-
-	formatMarkdown := s.Markdown
-	if !s.Config.FormatMarkdown {
-		formatMarkdown = !formatMarkdown
-	}
-
-	return client.ContinueCompletion(ctx, thread, prompt, t, formatMarkdown, modelName)
 }
