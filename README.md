@@ -154,6 +154,28 @@ Sometimes a refusal message might be shown if the model can't or won't provide a
 pal /ask Why is the sky blue
 ```
 
+### File mode
+
+Using `/file` optimizes the output for redirecting directly into a file. That means that markdown formatting is always disabled. Since LLMs will often wrap the output with triple backticks, even when asked not to, `pal` will attempt to remove these as well.
+
+```sh
+pal /file write a Dockerfile that installs nginx into an Alpine base image > Dockerfile
+```
+
+### Chat
+
+By default, each command invocation creates a fresh thread of conversation with the LLM. If you want to continue chatting with previous context included, there are two ways to do it.
+
+1. Use the `/chat` command. This will invoke the same command used previously, but with the conversation history included. It's useful for refining an initial prompt or asking follow up questions.
+```sh
+pal /ask "what does tar stand for?"
+# "tar" stands for "tape archive." ...
+
+pal /chat tell me more about these tapes
+```
+
+2. Add the `-c/--chat` flag to a command. While changing commands mid thread is possible, the current implementation retains the original system prompt and the LLM can have trouble changing course even if directed. Further experimentation is needed here. Ideally, one could hash out details via some `/ask` commands and then use `/file` to output an artifact at the end.
+
 ### Git commit
 
 The `/commit` command is used to stage changes in Git repos and automatically generate commit messages:
