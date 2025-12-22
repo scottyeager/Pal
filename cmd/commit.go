@@ -47,17 +47,9 @@ var commitCmd = &cobra.Command{
 		Respond only with the commit message. No explanations, additional formatting, or line breaks, please.`
 
 		// Add all modified and deleted files (but not untracked files) with verbose output
-		addCmd := exec.Command("git", "add", "--update", "--verbose")
-		addOut, err := addCmd.CombinedOutput()
-		if err != nil {
+		addCmd := exec.Command("git", "add", "--update")
+		if err := addCmd.Run(); err != nil {
 			return fmt.Errorf("failed to add files: %w", err)
-		}
-
-		// Check if anything was added by examining the verbose output
-		added := len(strings.TrimSpace(string(addOut))) > 0
-		if !added {
-			fmt.Println("Attempted to stage updated files, but no changes were found. Aborting.")
-			return nil
 		}
 
 		// Get diff
@@ -65,6 +57,12 @@ var commitCmd = &cobra.Command{
 		diffOut, err := diffCmd.Output()
 		if err != nil {
 			return fmt.Errorf("failed to get git diff: %w", err)
+		}
+
+		// Check if diffs are empty
+		if len(strings.TrimSpace(string(diffOut))) == 0 {
+			fmt.Println("No changes to commit. Aborting.")
+			return nil
 		}
 
 		// Get last 10 commits
