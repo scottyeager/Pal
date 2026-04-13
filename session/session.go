@@ -152,13 +152,34 @@ func (s *Session) ConstructPrompt() (string, error) {
 		return "", fmt.Errorf("error reading stdin: %w", err)
 	}
 
+	userMessage := s.UserMessage
+	// If the user's message ends with "..." and nothing is piped on stdin,
+	// drop into interactive stdin mode so they can paste/type input that
+	// would be awkward to pass as CLI args.
+	if stdInput == "" && len(userMessage) > 0 && strings.HasSuffix(userMessage[len(userMessage)-1], "...") {
+		last := strings.TrimSuffix(userMessage[len(userMessage)-1], "...")
+		trimmed := make([]string, len(userMessage))
+		copy(trimmed, userMessage)
+		if last == "" {
+			trimmed = trimmed[:len(trimmed)-1]
+		} else {
+			trimmed[len(trimmed)-1] = last
+		}
+		userMessage = trimmed
+
+		stdInput, err = inout.ReadStdinInteractive()
+		if err != nil {
+			return "", fmt.Errorf("error reading stdin: %w", err)
+		}
+	}
+
 	var userPrompt string
-	if stdInput != "" && len(s.UserMessage) > 0 {
-		userPrompt = stdInput + "\nThat concludes the stdin contents. Now here's the query from the user:\n" + strings.Join(s.UserMessage, " ")
+	if stdInput != "" && len(userMessage) > 0 {
+		userPrompt = stdInput + "\nThat concludes the stdin contents. Now here's the query from the user:\n" + strings.Join(userMessage, " ")
 	} else if stdInput != "" {
 		userPrompt = stdInput
 	} else {
-		userPrompt = strings.Join(s.UserMessage, " ")
+		userPrompt = strings.Join(userMessage, " ")
 	}
 
 	return userPrompt, nil
