@@ -102,6 +102,32 @@ func (c *Client) callLLM(ctx context.Context, anthropicMessages []anthropic.Mess
 	return response, nil
 }
 
+// IsContextLengthError reports whether err appears to be a provider
+// context-length / prompt-too-long error. Detection is by string match
+// across Anthropic and OpenAI-style messages; if a provider changes its
+// wording we fall through and the caller surfaces the raw error.
+func IsContextLengthError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	patterns := []string{
+		"prompt is too long",
+		"context length",
+		"maximum context",
+		"context_length_exceeded",
+		"string_above_max_length",
+		"too many tokens",
+		"input is too long",
+	}
+	for _, p := range patterns {
+		if strings.Contains(msg, p) {
+			return true
+		}
+	}
+	return false
+}
+
 // Start or continue a conversation thread
 func (c *Client) CallLLMWithThread(ctx context.Context, thread *inout.Thread, prompt string, temperature float64, formatMarkdown bool, model string) (string, error) {
 	var anthropicMessages []anthropic.MessageParam

@@ -14,7 +14,11 @@ type Config struct {
 	SelectedModel      string              `yaml:"selected_model"`
 	SelectedModels     map[string]string   `yaml:"selected_models"`
 	FormatMarkdown     bool                `yaml:"format_markdown"`
+	CommitMaxChunks    int                 `yaml:"commit_max_chunks"`
 }
+
+// DefaultCommitMaxChunks is used when CommitMaxChunks is unset (zero).
+const DefaultCommitMaxChunks = 4
 
 func GetBasePath() (string, error) {
 	if xdgDataHome := os.Getenv("XDG_DATA_HOME"); xdgDataHome != "" {
